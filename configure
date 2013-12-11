@@ -21,16 +21,13 @@ init () {
     required_libs="protobuf v8 termcap"
     other_libs="unwind tcmalloc_minimal"
     all_libs="$required_libs $other_libs"
-    support_libs="unwind tcmalloc_minimal v8 protobuf"
     default_static="tcmalloc_minimal"
 
     web_assets_deps="lessc coffee handlebars browserify proto2js"
     npm_deps="$web_assets_deps"
-    required_bin_deps="protoc"
-    support_bin_deps="$required_bin_deps $web_assets_deps npm"
+    required_bin_deps="protoc $web_assets_deps"
     optional_bin_deps="wget curl"
-    support_deps="$support_bin_deps $support_libs"
-    bin_deps="cxx $support_bin_deps $optional_bin_deps"
+    bin_deps="cxx $npm_deps $required_bin_deps $optional_bin_deps"
     all_deps="$bin_deps $all_libs"
 
     allowed_arg_vars="CXXFLAGS LDFLAGS"
@@ -225,10 +222,9 @@ read_args () {
             --continue) $no_arg; exit_on_error=false ;;
             --allow-fetch) $no_arg; allow_fetch=true ;;
             --fetch) $has_arg
-                allow_fetch=true
                 if [[ "$arg" = "all" ]]; then
-                    please_fetch_list="$support_deps"
-                elif contains "$support_deps" "$arg"; then
+                    please_fetch_list="$(all_fetch_deps)"
+                elif can_fetch "$arg"; then
                     please_fetch_list="$please_fetch_list $arg"
                 else
                     die "Don't know how to fetch '$arg'"
@@ -387,7 +383,7 @@ die () {
 # Generate a not found error
 not_found () {
     if $required; then
-	if contains "$support_deps" "`lc $1`"; then
+	if can_fetch "`lc $1`"; then
             error "missing $1. Install it, specify the full path with $(uc $1)= or run ./configure with --allow-fetch"
 	else
             error "missing $1. Install it or specify the full path with $(uc $1)="
@@ -682,6 +678,7 @@ check_bin () {
     local version
     test_bin_version $1 "$bin" || return
     var "$(uc $1)" "$bin"
+    var "$(uc $1)_DEP" ""
 }
 
 # List of dependencies that make will fetch
@@ -691,7 +688,8 @@ fetch_list=
 # Instruct make to fetch and build the binary
 fetch_bin () {
     show fetch
-    macro $(uc $1) "\$(TC_$(uc $1)_INT_EXE)"
+    macro $(uc $1) "\$(FETCH_PREFIX)/bin/$(lc $1)"
+    var $(uc $1)_DEP "\$(FETCH_PREFIX)/bin/$(lc $1)"
     fetch_list="$fetch_list $1"
 }
 
@@ -699,8 +697,9 @@ fetch_bin () {
 # Instruct make to fetch and build the library
 fetch_lib () {
     show fetch
-    var_append $(uc $1)_LIBS "\$($(uc $1)_INT_LIB)"
-    macro $(uc $1) "\$($(uc $1)_INT_LIB)"
+    local lib="\$(FETCH_PREFIX)/lib/lib$(lc $1).a"
+    var $(uc $1)_DEP "$lib"
+    var_append $(uc $1)_LIBS "$lib"
     fetch_list="$fetch_list $1"
 }
 
@@ -781,7 +780,10 @@ check_lib () {
     lookup "$lib_alias" $1 aliases || aliases=
     for lib in $1 $aliases; do
 	$check $lib $1
-	$can_show || return
+	if ! $can_show; then
+            var "$(uc $1)_DEP" ""
+            return
+        fi
     done
     if fetch_allowed $1; then
         fetch_lib $1
@@ -882,8 +884,8 @@ test_protobuf () {
 }
 
 fetch_allowed () {
-     (contains "$npm_deps" $1 ||
-         (contains "$support_deps" $1 && $allow_fetch)) || return 1
+     (contains "$please_fetch_list" $1 ||
+         (can_fetch $1 && $allow_fetch)) || return 1
 }
 
 check_v8_pre_3_19 () {
@@ -915,6 +917,23 @@ EOF
 check_boost () {
     require "Boost"
     check_lib_compile "" boost
+}
+
+
+can_fetch () {
+    error "TODO: can_fetch"
+    test -e $(dirname "$0")/fetch/specs/"$1".mk
+}
+
+all_fetch_deps () {
+    error "TODO: all_fetch_deps"
+    local ret=
+    for dep in $all_deps; do
+        if can_fetch $dep; then
+            ret="$ret $dep"
+        fi
+    done
+    echo "$ret"
 }
 
 # Call the main command with the command line arguments
