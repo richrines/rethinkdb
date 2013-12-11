@@ -37,12 +37,6 @@ init () {
 configure () {
     require "Bash"
     show "$BASH_VERSION"
-    if contains "$please_fetch_list" protoc; then
-        please_fetch_list="$please_fetch_list protobuf"
-    fi
-    if contains "$please_fetch_list" protobuf; then
-        please_fetch_list="$please_fetch_list protoc"
-    fi
     for var in $allowed_arg_vars; do
         local val
         if lookup "$arg_vars" $var val; then
@@ -687,6 +681,8 @@ fetch_list=
 # fetch_bin <name>
 # Instruct make to fetch and build the binary
 fetch_bin () {
+    error "TODO: fetch_bin"
+    return 1
     show fetch
     macro $(uc $1) "\$(FETCH_PREFIX)/bin/$(lc $1)"
     var $(uc $1)_DEP "\$(FETCH_PREFIX)/bin/$(lc $1)"
@@ -696,6 +692,8 @@ fetch_bin () {
 # fetch_lib <name>
 # Instruct make to fetch and build the library
 fetch_lib () {
+    error "TODO: fetch_lib"
+    return 1
     show fetch
     local lib="\$(FETCH_PREFIX)/lib/lib$(lc $1).a"
     var $(uc $1)_DEP "$lib"
@@ -799,7 +797,7 @@ check_dyn_lib () {
 
 # Test if the c++ compiler knows about the library
 check_lib_compile () {
-    local bfile=`dirname $0`/mk/gen/check_$2
+    local bfile=$root/mk/gen/check_$2
     local code
     if ! lookup "$lib_test_code" $2 code; then
         code='int main(){ return 0; }'
@@ -867,14 +865,14 @@ test_protobuf () {
         error "$PROTOC does not exist"
         return
     fi
-    local pbdir=`dirname $0`/mk/gen/protoc/
+    local pbdir=$root/mk/gen/protoc/
     mkdir -p "$pbdir"
     echo 'message Foo { enum Bar { Baz = 1; } }' > "$pbdir/test.proto"
     echo 'int main(){ return 0; }' > "$pbdir/main.cc"
     local out
     if ! out=$(
             "$PROTOC" "$pbdir/test.proto" --cpp_out=. 2>&1 &&
-            "$CXX" "$pbdir/test.pb.cc" "$pbdir/main.cc" -I "`dirname $0`" $PROTOBUF_LIBS $PTHREAD_LIBS ${CXXFLAGS:-} ${LDFLAGS:-} ${LIB_SEARCH_PATHS:-} -o "$pbdir/a.out" 2>&1)
+            "$CXX" "$pbdir/test.pb.cc" "$pbdir/main.cc" -I "$root" $PROTOBUF_LIBS $PTHREAD_LIBS ${CXXFLAGS:-} ${LDFLAGS:-} ${LIB_SEARCH_PATHS:-} -o "$pbdir/a.out" 2>&1)
     then
         error_details="$out"
         error "Unable to compile sample protobuf file. Try running ./configure with the --fetch protoc option"
@@ -894,7 +892,7 @@ check_v8_pre_3_19 () {
         return
     fi
     require "Use pre-3.19 v8 API"
-    local tmpfile=`dirname $0`/mk/gen/check_v8_pre_3_19
+    local tmpfile=$root/mk/gen/check_v8_pre_3_19
     cat > "$tmpfile.cc" <<EOF
 #include <v8.h>
 int main() {
@@ -919,14 +917,19 @@ check_boost () {
     check_lib_compile "" boost
 }
 
+fetch_alias () {
+    case "$1" in
+        protoc) echo protobuf ;;
+        *) echo "$1"
+    esac
+}
 
 can_fetch () {
-    error "TODO: can_fetch"
-    test -e $(dirname "$0")/fetch/specs/"$1".mk
+    local alias=$(fetch_alias $1)
+    test -e $root/support/specs/"$alias".sh
 }
 
 all_fetch_deps () {
-    error "TODO: all_fetch_deps"
     local ret=
     for dep in $all_deps; do
         if can_fetch $dep; then
@@ -935,6 +938,8 @@ all_fetch_deps () {
     done
     echo "$ret"
 }
+
+root=$(dirname $0)
 
 # Call the main command with the command line arguments
 main "$@" 3>/dev/null
