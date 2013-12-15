@@ -10,8 +10,8 @@ endif
 
 SUPPORT_SRC_DIR := $/support/src
 SUPPORT_BUILD_DIR := $(BUILD_ROOT_DIR)/support
-
 SUPPORT_LOG_DIR := $(SUPPORT_BUILD_DIR)
+PKG_SCRIPT := $/support/pkg/pkg.sh
 
 ifneq (1,$(VERBOSE))
   $(shell mkdir -p $(SUPPORT_LOG_DIR))
@@ -21,14 +21,14 @@ else
   SUPPORT_LOG_REDIRECT :=
 endif
 
-$(SUPPORT_BUILD_DIR)/%.mk: $/support/pkg/%.sh
-	VERSION=`$< version`; ( \
-	  echo '$$(SUPPORT_BUILD_DIR)/$*-'$$VERSION'/%:' ; \
-	  echo '	bash $(abspath $<) build $$(SUPPORT_BUILD_DIR)/$*-$VERSION $$(SUPPORT_LOG_REDIRECT)' ; \
-	) > $@
+$(SUPPORT_BUILD_DIR)/%:
+	$(PKG_SCRIPT) install_file $*
 
-include $(patsubst %, $(SUPPORT_BUILD_DIR)/%.mk, $(FETCH_LIST))
+.PHONY: fetch
+fetch:
+	$(patsubst %, $(PKG_SCRIPT) fetch % $(newline), $(FETCH_LIST))
 
+ifeq (0,1)
 
 ifeq ($(V8_INT_LIB),$(V8_LIBS))
   V8_DEP := $(V8_INT_LIB)

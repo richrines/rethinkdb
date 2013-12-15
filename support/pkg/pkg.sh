@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-set -x
-
 set -eu
 
 pkg_dir=$(dirname $0)
@@ -41,16 +39,27 @@ in_dir () {
     ( cd "$dir" && "$@" )
 }
 
-cmd=$2
-pkg=$1
-shift 2
+load_pkg () {
+    pkg=$1
 
-include "$pkg.sh"
+    include "$pkg.sh"
 
-src_dir=$pkg_dir/../src/$pkg-$version
+    src_dir=$pkg_dir/../src/$pkg-$version
 
-install_dir=$pkg_dir/../../build/support/$pkg-$version
+    install_dir=$pkg_dir/../../build/support/$pkg-$version
 
-mkdir -p "$src_dir" "$install_dir"
+    mkdir -p "$src_dir" "$install_dir"
+}
 
-$cmd "$@"
+install_file () {
+    load_pkg "${1%%-*}"
+    install "${1#*/}"
+}
+
+cmd=$1
+shift
+
+case "$cmd" in
+    install_file) install_file "$@" ;;
+    *) load_pkg "$1"; shift; "$cmd" "$@" ;;
+esac
