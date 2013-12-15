@@ -15,16 +15,29 @@ fetch () {
 }
 
 install-include () {
-    mkdir -p "$install_dir"
-    test -e "$install_dir/include" && rm -rf "$install_dir/include"
-    cp -ra "$src_dir/include" "$install_dir"
+    protobuf_install_target=install-data install
 }
 
 install () {
-    # TODO
-    mkdir -p "$install_dir/lib"
-    test -e "$install_dir/build" && rm -rf "$install_dir/build"
-    cp -ra "$src_dir" "$install_dir/build"
-    make -C "$install_dir/build" native CXXFLAGS=-Wno-array-bounds
-    find "$install_dir/build" -iname "*.o" | grep -v '\/preparser_lib\/' | xargs ar cqs "$install_dir/lib/libv8.a"
+    mkdir -p "$install_dir/build"
+    cp -a "$src_dir/." "$install_dir/build"
+
+    local ENV
+    if [[ "$COMPILER $OS" = "CLANG Darwin" ]]; then
+        ENV="env CXX=clang++ CXXFLAGS='-std=c++11 -stdlib=libc++' LDFLAGS=-lc++"
+    else
+        ENV=
+    fi
+
+    in_dir "$install_dir/build" $ENV ./configure --prefix="$(niceabspath "$install_dir")"
+    in_dir "$install_dir/build" $ENV make ${protobuf_install_target:-install}
+    # local protoc="$install_dir/bin/protoc"
+    # if test -e "$protoc"; then
+    #     mv "$protoc" "$protoc-orig"
+    #     echo '#!/bin/sh' > "$protoc"
+    #     echo "export LD_LIBRARY_PATH='$install_dir/lib':\$LD_LIBRARY_PATH" >> "$protoc"
+    #     echo "export PATH='$install_dir/bin':\$PATH" >> "$protoc"
+    #     echo 'exec protoc-orig "$@"' >> "$protoc"
+    #     chmod +x "$protoc"
+    # fi
 }
