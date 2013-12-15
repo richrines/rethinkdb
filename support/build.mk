@@ -15,18 +15,42 @@ PKG_SCRIPT := $/support/pkg/pkg.sh
 
 ifneq (1,$(VERBOSE))
   $(shell mkdir -p $(SUPPORT_LOG_DIR))
-  SUPPORT_LOG_PATH = $(SUPPORT_LOG_DIR)/$*.log
-  SUPPORT_LOG_REDIRECT = > $(SUPPORT_LOG_PATH) 2>&1 || ( echo Error log: $(SUPPORT_LOG_PATH) ; tail -n 40 $(SUPPORT_LOG_PATH) ; false )
+  SUPPORT_LOG_REDIRECT = > $1 2>&1 || ( tail -n 20 $1 ; echo ; echo Full error log: $1 ; false )
 else
   SUPPORT_LOG_REDIRECT :=
 endif
 
-$(SUPPORT_BUILD_DIR)/%:
-	$(PKG_SCRIPT) install_file $*
+ALL_FETCH   := $(foreach pkg, $(FETCH_LIST), $(if $(shell test -e $(SUPPORT_SRC_DIR) || echo y),fetch-$(pkg)))
+ALL_SUPPORT := $(foreach pkg, $(FETCH_LIST), support-$(pkg))
 
-.PHONY: fetch
-fetch:
-	$(patsubst %, $(PKG_SCRIPT) fetch % $(newline), $(FETCH_LIST))
+.PHONY: fetch support
+fetch: $(ALL_FETCH)
+support: $(ALL_SUPPORT)
+
+.PHONY:  $(ALL_FETCH) $(ALL_SUPPORT)
+
+$(ALL_FETCH): fetch-%:
+	$P FETCH $*
+	$(PKG_SCRIPT) fetch $* $(call SUPPORT_LOG_REDIRECT, $(SUPPORT_LOG_DIR)/$*.log)
+
+$(ALL_SUPPORT): support-%: fetch-%
+	$P BUILD $*
+	$(PKG_SCRIPT) install $* $(call SUPPORT_LOG_REDIRECT, $(SUPPORT_LOG_DIR)/$*.log)
+
+$(filter-out $(ALL_FETCH), $(foreach pkg, $(FETCH_LIST), fetch-$(pkg))):
+	true
+
+support-include-%: fetch-%
+	$P COPY
+	$(PKG_SCRIPT) install-include $* $(call SUPPORT_LOG_REDIRECT, $(SUPPORT_LOG_DIR)/$*.log)
+
+EXTRACT_PKG_NAME = $(word 1, $(subst _, $(space), $(patsubst $(SUPPORT_BUILD_DIR)/%, %, $($(var)))))
+
+$(foreach var, $(filter %_INCLUDE_DEP, $(.VARIABLES)), \
+    $(eval $($(var)): support-include-$(EXTRACT_PKG_NAME) ))
+
+$(foreach var, $(filter %_LIBS_DEP %_BIN_DEP, $(.VARIABLES)), \
+    $(eval $($(var)): support-$(EXTRACT_PKG_NAME) ))
 
 ifeq (0,1)
 

@@ -44,22 +44,19 @@ load_pkg () {
 
     include "$pkg.sh"
 
-    src_dir=$pkg_dir/../src/$pkg-$version
+    src_dir=$pkg_dir/../src/$pkg\_$version
 
-    install_dir=$pkg_dir/../../build/support/$pkg-$version
-
-    mkdir -p "$src_dir" "$install_dir"
+    install_dir=$pkg_dir/../../build/support/$pkg\_$version
 }
 
-install_file () {
-    load_pkg "${1%%-*}"
-    install "${1#*/}"
+fetched () {
+    test -e "$src_dir"
 }
 
 cmd=$1
 shift
 
-case "$cmd" in
-    install_file) install_file "$@" ;;
-    *) load_pkg "$1"; shift; "$cmd" "$@" ;;
-esac
+load_pkg "$1"
+shift
+
+"$cmd" "$@"

@@ -315,7 +315,7 @@ unit: $(BUILD_DIR)/$(SERVER_UNIT_TEST_NAME)
 
 .PRECIOUS: $(PROTO_DIR)/. $(QL2_PROTO_HEADERS) $(QL2_PROTO_CODE)
 
-$(PROTO_DIR)/%.pb.h $(PROTO_DIR)/%.pb.cc: $(SOURCE_DIR)/%.proto | $(PROTOC_DEP) $(PROTO_DIR)/.
+$(PROTO_DIR)/%.pb.h $(PROTO_DIR)/%.pb.cc: $(SOURCE_DIR)/%.proto | $(PROTOC_BIN_DEP) $(PROTO_DIR)/.
 	$P PROTOC[CPP] $^
 	$(PROTOC_RUN) $(PROTOCFLAGS_CXX) --cpp_out $(PROTO_DIR) $^
 	touch $@
@@ -330,7 +330,7 @@ rpc/semilattice/joins/macros.hpp rpc/serialize_macros.hpp rpc/mailbox/typed.hpp:
 .PHONY: rethinkdb
 rethinkdb: $(BUILD_DIR)/$(SERVER_EXEC_NAME)
 
-$(BUILD_DIR)/$(SERVER_EXEC_NAME): $(SERVER_EXEC_OBJS) | $(BUILD_DIR)/. $(TCMALLOC_DEP) $(PROTOBUF_DEP)
+$(BUILD_DIR)/$(SERVER_EXEC_NAME): $(SERVER_EXEC_OBJS) | $(BUILD_DIR)/. $(TCMALLOC_MINIMAL_LIBS_DEP) $(PROTOC_BIN_DEP)
 	$P LD $@
 	$(RT_CXX) $(SERVER_EXEC_OBJS) $(RT_LDFLAGS) -o $(BUILD_DIR)/$(SERVER_EXEC_NAME) $(LD_OUTPUT_FILTER)
 ifeq ($(NO_TCMALLOC),0) # if we link to tcmalloc
@@ -346,7 +346,7 @@ endif
 # default cases. So we have to remove the -Wswitch-default argument for them.
 $(OBJ_DIR)/unittest/%.o: RT_CXXFLAGS := $(filter-out -Wswitch-default,$(RT_CXXFLAGS)) $(UNIT_TEST_INCLUDE_FLAG)
 
-$(BUILD_DIR)/$(SERVER_UNIT_TEST_NAME): $(SERVER_UNIT_TEST_OBJS) $(UNIT_STATIC_LIBRARY_PATH) | $(BUILD_DIR)/. $(TCMALLOC_DEP)
+$(BUILD_DIR)/$(SERVER_UNIT_TEST_NAME): $(SERVER_UNIT_TEST_OBJS) $(UNIT_STATIC_LIBRARY_PATH) | $(BUILD_DIR)/. $(TCMALLOC_MINIMAL_LIBS_DEP)
 	$P LD $@
 	$(RT_CXX) $(SERVER_UNIT_TEST_OBJS) $(RT_LDFLAGS) $(UNIT_STATIC_LIBRARY_PATH) -o $@ $(LD_OUTPUT_FILTER)
 
@@ -359,7 +359,7 @@ $(OBJ_DIR)/%.pb.o: $(PROTO_DIR)/%.pb.cc $(MAKEFILE_DEPENDENCY) $(QL2_PROTO_HEADE
 	$P CC $< -o $@
 	$(RT_CXX) $(RT_CXXFLAGS) -c -o $@ $<
 
-$(OBJ_DIR)/%.o: $(SOURCE_DIR)/%.cc $(MAKEFILE_DEPENDENCY) $(V8_DEP) $(RE2_DEP) | $(QL2_PROTO_OBJS)
+$(OBJ_DIR)/%.o: $(SOURCE_DIR)/%.cc $(MAKEFILE_DEPENDENCY) $(V8_INCLUDE_DEP) $(RE2_DEP) | $(QL2_PROTO_OBJS)
 	mkdir -p $(dir $@) $(dir $(DEP_DIR)/$*)
 	$P CC $< -o $@
 	$(RT_CXX) $(RT_CXXFLAGS) -c -o $@ $< \

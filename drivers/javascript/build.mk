@@ -14,7 +14,7 @@ DRIVER_COMPILED_COFFEE := $(patsubst $(JS_SRC_DIR)/%.coffee,$(DRIVER_COFFEE_BUIL
 
 JS_PKG_DIR := $(PACKAGES_DIR)/js
 
-$(PB_BIN_FILE): $(PROTO_FILE) | $(JS_BUILD_DIR)/. $(PROTOC_DEP)
+$(PB_BIN_FILE): $(PROTO_FILE) | $(JS_BUILD_DIR)/. $(PROTOC_BIN_DEP)
 	$P PROTOC
 	$(PROTOC) -I $(PROTO_FILE_DIR) -o $(JS_BUILD_DIR)/ql2.desc $(PROTO_FILE)
 
@@ -51,14 +51,14 @@ js-clean:
 
 .PHONY: js-install
 js-install: NPM_PREFIX=.
-js-install: $(JS_PKG_DIR) | $(NPM_DEP)
+js-install: $(JS_PKG_DIR) | $(NPM_BIN_DEP)
 	$P NPM-INSTALL $(JS_PKG_DIR)
 	MAKEFLAGS= $(NPM) install $(JS_PKG_DIR) --prefix $(NPM_PREFIX)
 
 .PHONY: js-dependencies
 js-dependencies: $(JS_PKG_DIR)/node_modules
 
-$(JS_PKG_DIR)/node_modules: $(JS_PKG_DIR) | $(NPM_DEP)
+$(JS_PKG_DIR)/node_modules: $(JS_PKG_DIR) | $(NPM_BIN_DEP)
 	$P NPM-I dependencies
 	( cd $(JS_PKG_DIR) && \
 	  MAKEFLAGS= $(abspath $(NPM)) install --prefix $(abspath $(JS_PKG_DIR)) \

@@ -27,8 +27,9 @@ fetch () {
     echo "$package_json" > "$tmp_dir/package.json"
     in_dir "$tmp_dir" npm install
     in_dir "$tmp_dir" npm pack
-    mv "$tmp_dir/packed-$npm_package-$version.tgz" "$src_dir"
-    rm -rf "$tmp_dir"
+    in_dir "$tmp_dir" rm -rf npm-shrinkwrap.json package.json node_modules
+    test -e "$src_dir" && rm -rf "$src_dir"
+    mv "$tmp_dir" "$src_dir"
 }
 
 shrinkwrap () {
@@ -42,8 +43,8 @@ shrinkwrap () {
 }
 
 install () {
-    rm -rf "$install_dir/node_modules" || : 2>/dev/null
-    mkdir "$install_dir/node_modules"
+    rm -rf "$install_dir" || : 2>/dev/null
+    mkdir -p "$install_dir/node_modules"
     local tgz
     tgz=$(niceabspath "$src_dir/packed-$npm_package-$version.tgz")
     in_dir "$install_dir" npm --no-registry install "$tgz"
@@ -55,7 +56,7 @@ install () {
         name=$(basename "$bin")
         local script="$install_dir/bin/$name"
         echo '#!/bin/sh' > "$script"
-        echo "exec $(niceabspath "$bin")"' "$@"' > "$script"
+        echo "exec $(niceabspath "$bin")"' "$@"' >> "$script"
         chmod +x "$script"
     done
 }
