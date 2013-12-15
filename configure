@@ -706,9 +706,10 @@ fetch_lib () {
     local pkg
     local version
     add_fetch "$1"
-    macro "$(uc "$1")_LIBS"        "\$(SUPPORT_BUILD_DIR)/$pkg""_$version/lib/$1.a"
-    macro "$(uc "$1")_LIBS_DEP"    "\$(SUPPORT_BUILD_DIR)/$pkg""_$version/lib/$1.a"
-    macro "$(uc "$1")_INCLUDE_DEP" "\$(SUPPORT_BUILD_DIR)/$pkg""_$version/include"
+    macro "$(uc "$1")_LIBS"             "\$(SUPPORT_BUILD_DIR)/$pkg""_$version/lib/lib$1.a"
+    macro "$(uc "$1")_LIBS_DEP"         "\$(SUPPORT_BUILD_DIR)/$pkg""_$version/lib/lib$1.a"
+    macro "$(uc "$1")_INCLUDE" "-isystem \$(SUPPORT_BUILD_DIR)/$pkg""_$version/include"
+    macro "$(uc "$1")_INCLUDE_DEP"      "\$(SUPPORT_BUILD_DIR)/$pkg""_$version/include"
 }
 
 # require_dep <name>
@@ -789,6 +790,7 @@ check_lib () {
     for lib in $1 $aliases; do
 	$check $lib $1
 	if ! $can_show; then
+            var "$(uc $1)_INCLUDE" ""
             var "$(uc $1)_INCLUDE_DEP" ""
             var "$(uc $1)_LIBS_DEP" ""
             return

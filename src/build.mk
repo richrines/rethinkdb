@@ -7,7 +7,7 @@ LDFLAGS ?=
 CXXFLAGS ?=
 RT_LDFLAGS := $(LDFLAGS) $(RE2_LIBS) $(TERMCAP_LIBS)
 RT_LDFLAGS += $(V8_LIBS) $(PROTOBUF_LIBS) $(TCMALLOC_MINIMAL_LIBS) $(PTHREAD_LIBS)
-RT_CXXFLAGS := $(CXXFLAGS) $(RE2_CXXFLAGS)
+RT_CXXFLAGS := $(CXXFLAGS) $(RE2_CXXFLAGS) $(V8_INCLUDE)
 
 ifeq ($(USE_CCACHE),1)
   RT_CXX := ccache $(CXX)
@@ -317,7 +317,7 @@ unit: $(BUILD_DIR)/$(SERVER_UNIT_TEST_NAME)
 
 $(PROTO_DIR)/%.pb.h $(PROTO_DIR)/%.pb.cc: $(SOURCE_DIR)/%.proto | $(PROTOC_BIN_DEP) $(PROTO_DIR)/.
 	$P PROTOC[CPP] $^
-	$(PROTOC_RUN) $(PROTOCFLAGS_CXX) --cpp_out $(PROTO_DIR) $^
+	$(PROTOC) $(PROTOCFLAGS_CXX) --cpp_out $(PROTO_DIR) $^
 	touch $@
 
 rpc/semilattice/joins/macros.hpp: $(TOP)/scripts/generate_join_macros.py

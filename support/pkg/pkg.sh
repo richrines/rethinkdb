@@ -53,6 +53,27 @@ fetched () {
     test -e "$src_dir"
 }
 
+git_clone_tag () {
+    local remote tag repo
+    remote=$1
+    tag=$2
+    repo=$3
+    ( cd "$repo"
+      git init
+      git remote add origin "$remote"
+      git fetch --depth 1 origin "$tag"
+      git checkout FETCH_HEAD
+    )
+}
+
+geturl () {
+    if [[ -n "${WGET:-}" ]]; then
+        $WGET --quiet --output-document=- "$@"
+    else
+        ${CURL:-curl} --silent "$@"
+    fi
+}
+
 cmd=$1
 shift
 

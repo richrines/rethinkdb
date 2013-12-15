@@ -1,17 +1,12 @@
 # Copyright 2010-2013 RethinkDB, all rights reserved.
 
-ifdef WGET
-  GETURL := $(WGET) --quiet --output-document=-
-else ifdef CURL
-  GETURL := $(CURL) --silent
-else
-  GETURL = $(error wget or curl not configured)
-endif
-
 SUPPORT_SRC_DIR := $/support/src
 SUPPORT_BUILD_DIR := $(BUILD_ROOT_DIR)/support
 SUPPORT_LOG_DIR := $(SUPPORT_BUILD_DIR)
 PKG_SCRIPT := $/support/pkg/pkg.sh
+
+export WGET
+export CURL
 
 ifneq (1,$(VERBOSE))
   $(shell mkdir -p $(SUPPORT_LOG_DIR))
@@ -54,121 +49,17 @@ $(foreach var, $(filter %_LIBS_DEP %_BIN_DEP, $(.VARIABLES)), \
 
 ifeq (0,1)
 
-ifeq ($(V8_INT_LIB),$(V8_LIBS))
-  V8_DEP := $(V8_INT_LIB)
-  CXXFLAGS += -isystem $(V8_INT_DIR)/include
-else
-  V8_CXXFLAGS :=
-endif
-
-ifeq ($(PROTOBUF_INT_LIB),$(PROTOBUF_LIBS))
-  PROTOBUF_DEP := $(PROTOBUF_INT_LIB)
-  CXXFLAGS += -isystem $(TC_PROTOC_INT_INC_DIR)
-endif
 
 NPM ?= NO_NPM
 ifeq ($(NPM),$(TC_NPM_INT_EXE))
   NPM_DEP := $(NPM)
 endif
 
-COFFEE ?= NO_COFFEE
-ifeq ($(COFFEE),$(TC_COFFEE_INT_EXE))
-  COFFEE_DEP := $(COFFEE)
-endif
-
 ifeq ($(TCMALLOC_MINIMAL_INT_LIB),$(TCMALLOC_MINIMAL_LIBS))
   TCMALLOC_DEP := $(TCMALLOC_MINIMAL_INT_LIB)
 endif
 
-.PHONY: support
-support: $(COFFEE_DEP) $(V8_DEP) $(PROTOBUF_DEP) $(NPM_DEP) $(TCMALLOC_DEP) $(PROTOC_DEP)
 
-ifdef LESSC
-  support: $(LESSC)
-endif
-
-ifdef HANDLEBARS
-  support: $(HANDLEBARS)
-endif
-
-ifdef BROWSERIFY
-  support: $(BROWSERIFY)
-endif
-
-ifdef PROTO2JS
-  support: $(PROTO2JS)
-endif
-
-$(TC_BUILD_DIR)/%: $(TC_SRC_DIR)/%
-	$P CP
-	rm -rf $@
-	cp -pRP $< $@
-
-$(TC_LESSC_INT_EXE): $(NODE_MODULES_DIR)/less | $(dir $(TC_LESSC_INT_EXE)).
-	$P LN
-	rm -f $@
-	ln -s $(abspath $</bin/lessc) $@
-	touch $@
-
-$(TC_BROWSERIFY_INT_EXE): $(NODE_MODULES_DIR)/browserify | $(dir $(TC_BROWSERIFY_INT_EXE)).
-	$P LN
-	rm -f $@
-	ln -s $(abspath $</bin/cmd.js) $@
-	touch $@
-
-$(TC_PROTO2JS_INT_EXE): $(NODE_MODULES_DIR)/protobufjs | $(dir $(TC_PROTO2JS_INT_EXE)).
-	$P LN
-	rm -f $@
-	ln -s $(abspath $</bin/proto2js) $@
-	touch $@
-
-$(NODE_MODULES_DIR)/less: $(NPM_DEP) | $(NODE_MODULES_DIR)/.
-	$P NPM-I less
-	cd $(TOOLCHAIN_DIR) && $(abspath $(NPM)) install less@1.4.0 $(SUPPORT_LOG_REDIRECT)
-
-$(NODE_MODULES_DIR)/browserify: $(NPM_DEP) | $(NODE_MODULES_DIR)/.
-	$P NPM-I browserify
-	cd $(TOOLCHAIN_DIR) && $(abspath $(NPM)) install browserify@2.18.1 $(SUPPORT_LOG_REDIRECT)
-
-$(NODE_MODULES_DIR)/protobufjs: $(NPM_DEP) | $(NODE_MODULES_DIR)/.
-	$P NPM-I protobufjs
-	cd $(TOOLCHAIN_DIR) && $(abspath $(NPM)) install protobufjs@1.1.4 $(SUPPORT_LOG_REDIRECT)
-
-$(TC_COFFEE_INT_EXE): $(NODE_MODULES_DIR)/coffee-script | $(dir $(TC_COFFEE_INT_EXE)).
-	$P LN
-	rm -f $@
-	ln -s $(abspath $</bin/coffee) $@
-	touch $@
-
-$(NODE_MODULES_DIR)/coffee-script: $(NPM_DEP) | $(NODE_MODULES_DIR)/.
-	$P NPM-I coffee-script
-	cd $(TOOLCHAIN_DIR) && \
-	  $(abspath $(NPM)) install coffee-script@1.4.0 $(SUPPORT_LOG_REDIRECT)
-
-$(TC_HANDLEBARS_INT_EXE): $(NODE_MODULES_DIR)/handlebars | $(dir $(TC_HANDLEBARS_INT_EXE)).
-	$P LN
-	rm -f $@
-	ln -s $(abspath $</bin/handlebars) $@
-	touch $@
-
-$(NODE_MODULES_DIR)/handlebars: $(NPM_DEP) | $(NODE_MODULES_DIR)/.
-	$P NPM-I handlebars
-	cd $(TOOLCHAIN_DIR) && \
-	  $(abspath $(NPM)) install handlebars@1.0.12 $(SUPPORT_LOG_REDIRECT)
-
-$(V8_SRC_DIR):
-	$P SVN-CO v8
-	( cd $(TC_SRC_DIR) && \
-	  svn checkout http://v8.googlecode.com/svn/tags/3.19.18.4 v8 ) $(SUPPORT_LOG_REDIRECT)
-
-	$P MAKE v8 dependencies
-	$(EXTERN_MAKE) -C $(V8_SRC_DIR) dependencies $(SUPPORT_LOG_REDIRECT)
-
-$(V8_INT_LIB): $(V8_INT_DIR)
-	$P MAKE v8
-	$(EXTERN_MAKE) -C $(V8_INT_DIR) native CXXFLAGS=-Wno-array-bounds $(SUPPORT_LOG_REDIRECT)
-	$P AR $@
-	find $(V8_INT_DIR) -iname "*.o" | grep -v '\/preparser_lib\/' | xargs ar cqs $(V8_INT_LIB);
 
 $(NODE_SRC_DIR):
 	$P DOWNLOAD node
@@ -187,12 +78,6 @@ $(TC_NPM_INT_EXE): $(NODE_DIR) | $(SUPPORT_DIR)/usr/bin/.
 	mv $(SUPPORT_DIR_ABS)/usr/bin/npm $@ && touch $@
 
 $(PROTOC_SRC_DIR):
-	$P DOWNLOAD protoc
-	$(GETURL) http://protobuf.googlecode.com/files/protobuf-2.5.0.tar.bz2 | ( \
-	  cd $(TC_SRC_DIR) && \
-	  tar -xjf - && \
-	  rm -rf protobuf && \
-	  mv protobuf-2.5.0 protobuf )
 
 ifeq ($(COMPILER) $(OS),CLANG Darwin)
   BUILD_PROTOC_ENV := CXX=clang++ CXXFLAGS='-std=c++11 -stdlib=libc++' LDFLAGS=-lc++
@@ -233,5 +118,9 @@ $(LIBUNWIND_DIR): $(LIBUNWIND_SRC_DIR)
 $(TCMALLOC_MINIMAL_INT_LIB): $(LIBUNWIND_DIR) $(GPERFTOOLS_DIR)
 	$P MAKE libunwind gperftools
 	cd $(TOP)/support/build && rm -f native_list.txt semistaged_list.txt staged_list.txt boost_list.txt post_boost_list.txt && touch native_list.txt semistaged_list.txt staged_list.txt boost_list.txt post_boost_list.txt && echo libunwind >> semistaged_list.txt && echo gperftools >> semistaged_list.txt && cp -pRP $(COLONIZE_SCRIPT_ABS) ./ && ( unset PREFIX && unset prefix && unset MAKEFLAGS && unset MFLAGS && unset DESTDIR && bash ./colonize.sh ; )
+
+
+
+  PROTOC_RUN := env LD_LIBRARY_PATH=$(TC_PROTOC_INT_LIB_DIR):$(LD_LIBRARY_PATH) PATH=$(TC_PROTOC_INT_BIN_DIR):$(PATH) $(PROTOC)
 
 endif
