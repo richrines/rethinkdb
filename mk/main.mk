@@ -58,8 +58,5 @@ include $(TOP)/mk/tools.mk
 # Tests
 include $(TOP)/test/build.mk
 
-# Generate local Makefiles
-include $(TOP)/mk/local.mk
-
 .PHONY: clean
 clean: build-clean

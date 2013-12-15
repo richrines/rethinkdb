@@ -3,7 +3,6 @@
 ##### Build parameters
 
 # We assemble path directives.
-CXXPATHDS ?=
 LDFLAGS ?=
 CXXFLAGS ?=
 RT_LDFLAGS := $(LDFLAGS) $(RE2_LIBS) $(TERMCAP_LIBS)
@@ -90,7 +89,6 @@ RT_CXXFLAGS += -I$(SOURCE_DIR)
 RT_CXXFLAGS += -pthread
 RT_CXXFLAGS += "-DPRODUCT_NAME=\"$(PRODUCT_NAME)\""
 RT_CXXFLAGS += -DWEB_ASSETS_DIR_NAME='"$(WEB_ASSETS_DIR_NAME)"'
-RT_CXXFLAGS += $(CXXPATHDS)
 RT_CXXFLAGS += -Wall -Wextra
 
 # Force 64-bit off_t size on Linux -- also, sizeof(off_t) will be

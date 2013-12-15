@@ -4,25 +4,35 @@ ifdef WGET
   GETURL := $(WGET) --quiet --output-document=-
 else ifdef CURL
   GETURL := $(CURL) --silent
+else
+  GETURL = $(error wget or curl not configured)
 endif
 
+SUPPORT_SRC_DIR := $/support/src
+SUPPORT_BUILD_DIR := $(BUILD_ROOT_DIR)/support
 
-SUPPORT_PREFIX := $(BUILD_DIR)/support
-PATH := $(abspath $(SUPPORT_PREFIX)/bin):$(PATH)
+SUPPORT_LOG_DIR := $(SUPPORT_BUILD_DIR)
 
-SUPPORT_LOG_DIR := $(SUPPORT_PREFIX)/log
-
-ifeq (0,$(VERBOSE))
+ifneq (1,$(VERBOSE))
   $(shell mkdir -p $(SUPPORT_LOG_DIR))
-  SUPPORT_LOG_PATH = $(SUPPORT_LOG_DIR)/$(notdir $@).log
+  SUPPORT_LOG_PATH = $(SUPPORT_LOG_DIR)/$*.log
   SUPPORT_LOG_REDIRECT = > $(SUPPORT_LOG_PATH) 2>&1 || ( echo Error log: $(SUPPORT_LOG_PATH) ; tail -n 40 $(SUPPORT_LOG_PATH) ; false )
 else
   SUPPORT_LOG_REDIRECT :=
 endif
 
+$(SUPPORT_BUILD_DIR)/%.mk: $/support/pkg/%.sh
+	VERSION=`$< version`; ( \
+	  echo '$$(SUPPORT_BUILD_DIR)/$*-'$$VERSION'/%:' ; \
+	  echo '	bash $(abspath $<) build $$(SUPPORT_BUILD_DIR)/$*-$VERSION $$(SUPPORT_LOG_REDIRECT)' ; \
+	) > $@
+
+include $(patsubst %, $(SUPPORT_BUILD_DIR)/%.mk, $(FETCH_LIST))
+
+
 ifeq ($(V8_INT_LIB),$(V8_LIBS))
   V8_DEP := $(V8_INT_LIB)
-  CXXPATHDS += -isystem $(V8_INT_DIR)/include
+  CXXFLAGS += -isystem $(V8_INT_DIR)/include
 else
   V8_CXXFLAGS :=
 endif
@@ -199,3 +209,5 @@ $(LIBUNWIND_DIR): $(LIBUNWIND_SRC_DIR)
 $(TCMALLOC_MINIMAL_INT_LIB): $(LIBUNWIND_DIR) $(GPERFTOOLS_DIR)
 	$P MAKE libunwind gperftools
 	cd $(TOP)/support/build && rm -f native_list.txt semistaged_list.txt staged_list.txt boost_list.txt post_boost_list.txt && touch native_list.txt semistaged_list.txt staged_list.txt boost_list.txt post_boost_list.txt && echo libunwind >> semistaged_list.txt && echo gperftools >> semistaged_list.txt && cp -pRP $(COLONIZE_SCRIPT_ABS) ./ && ( unset PREFIX && unset prefix && unset MAKEFLAGS && unset MFLAGS && unset DESTDIR && bash ./colonize.sh ; )
+
+endif
