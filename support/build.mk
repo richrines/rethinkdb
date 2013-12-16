@@ -5,16 +5,20 @@
 # These rules are governed by the settings generated from ./configure
 # Namely, the FETCH_LIST, *_VERSION and *_DEP variables
 #
-# Some of these rules are very complicated, to try and convince make to:
+# Some of these rules are complicated and delicate. They try to convince make to:
 #  * not rebuild files that are already built
 #  * not wait on files to be built when they are not needed yet
 
+# Recurrent directories
 SUPPORT_SRC_DIR := $/support/src
 SUPPORT_BUILD_DIR := $(BUILD_ROOT_DIR)/support
 SUPPORT_LOG_DIR := $(SUPPORT_BUILD_DIR)
+
+# How to call the pkg.sh script
 PKG_SCRIPT_VARIABLES := WGET CURL OS COMPILER CXX
 PKG_SCRIPT := $(foreach v, $(PKG_SCRIPT_VARIABLES), $v='$($v)') MAKEFLAGS= $/support/pkg/pkg.sh
 
+# How to log the output of fetching and building packages
 ifneq (1,$(VERBOSE))
   $(shell mkdir -p $(SUPPORT_LOG_DIR))
   SUPPORT_LOG_REDIRECT = > $1 2>&1 || ( tail -n 20 $1 ; echo ; echo Full error log: $1 ; false )
@@ -22,44 +26,67 @@ else
   SUPPORT_LOG_REDIRECT :=
 endif
 
-ALL_FETCH   := $(foreach pkg, $(FETCH_LIST), fetch-$(pkg))
-ALL_SUPPORT := $(foreach pkg, $(FETCH_LIST), support-$(pkg))
-
+# Phony targets to fetch and build all dependencies
 .PHONY: fetch support
-fetch: $(ALL_FETCH)
-support: $(ALL_SUPPORT)
+fetch: $(foreach pkg, $(FETCH_LIST), fetch-$(pkg))
+support: $(foreach pkg, $(FETCH_LIST), support-$(pkg))
 
-.PHONY: $(ALL_FETCH) $(ALL_SUPPORT)
-
-$(foreach pkg, $(FETCH_LIST), \
-  $(eval fetch-$(pkg): $(SUPPORT_SRC_DIR)/$(pkg)_$($(pkg)_VERSION)))
-
+# Download a dependency
 $(SUPPORT_SRC_DIR)/%:
 	$P FETCH $*
 	name='$*'; $(PKG_SCRIPT) fetch $${name%%_*} $(call SUPPORT_LOG_REDIRECT, $(SUPPORT_LOG_DIR)/$*.log)
 
-#####
+# Lst of files that make expects the packages to install
+SUPPORT_TARGET_FILES := $(foreach var, $(filter %_LIBS_DEP %_BIN_DEP, $(.VARIABLES)), $($(var)))
+SUPPORT_INCLUDE_DIRS := $(foreach var, $(filter %_INCLUDE_DEP,        $(.VARIABLES)), $($(var)))
 
-SUPPORT_TARGET_FILES := $(foreach var, $(filter %_LIBS_DEP %_BIN_DEP, $(.VARIABLES)), $((var)))
+# This function generates the suppport-* and fetch-* rules for a package
+# $1 = target files, $2 = pkg name, $3 = pkg version
+define support_rules
+
+# Download a single packages
+.PHONY: fetch-$2
+fetch-$2: $$(SUPPORT_SRC_DIR)/$2_$3
+
+# Build a single package
+.PHONY: support-$2
+support-$2: support-$2_$3
+
+# The actual rule that builds the package
+.PHONY: support-$2_$3
+support-$2_% $(foreach target,$1,$(subst _$3/,_%/,$(target))): $(SUPPORT_SRC_DIR)/$2_$3 | $(filter $(SUPPORT_BUILD_DIR)/$2_$3/include, $(SUPPORT_INCLUDE_DIRS))
+	$$P BUILD $2_$3
+	$$(PKG_SCRIPT) install $2 $$(call SUPPORT_LOG_REDIRECT, $$(SUPPORT_LOG_DIR)/$2_$3.log)
+
+endef
+
+# For each package, list the target files and generate custom rules for that package
+pkg_TARGET_FILES = $(filter $(SUPPORT_BUILD_DIR)/$(pkg)_%, $(SUPPORT_TARGET_FILES))
+$(foreach pkg,$(FETCH_LIST),\
+  $(eval $(call support_rules,$(pkg_TARGET_FILES),$(pkg),$($(pkg)_VERSION))))
+
+# This function generates the support-include-* rules for a package
+# $1 = include dir, $2 = pkg name, $3 = pkg version
+define support_include_rules
+
+# Install the include files for a given package
+.PHONY: support-include-$2 support-include-$2_$3
+support-include-$2: support-include-$2_$3
+support-include-$2_% $(subst _$3/,_%/,$1): $(SUPPORT_SRC_DIR)/$2_$3
+	$$P INSTALL-INCLUDE $2_$3
+	$$(PKG_SCRIPT) install-include $2
+	  $$(call SUPPORT_LOG_REDIRECT, $$(SUPPORT_LOG_DIR)/$2_$3.log)
+	touch $1
+
+endef
+
+# List all the packages that have include files and generate custom rules for those files
+include_PKG_NAME = $(word 1, $(subst _, $(space), $(patsubst $(SUPPORT_BUILD_DIR)/%, %, $(include))))
+include_PKG_VERSION = $(word 2, $(subst _, $(space), $(subst /, $(space), $(patsubst $(SUPPORT_BUILD_DIR)/%, %, $(include)))))
+$(foreach include, $(SUPPORT_INCLUDE_DIRS), \
+  $(eval $(call support_include_rules,$(include),$(include_PKG_NAME),$(include_PKG_VERSION))))
 
 
-$(ALL_SUPPORT): support-%:
-	$P BUILD $*
-	$(PKG_SCRIPT) install $* $(call SUPPORT_LOG_REDIRECT, $(SUPPORT_LOG_DIR)/$*.log)
-
-NEEDS_FETCH := $(foreach pkg, $(FETCH_LIST), \
-	         $(if $(shell $(PKG_SCRIPT) fetched $(pkg) && echo y),,support-$(pkg)))
-
-#####
-
-var_PKG_NAME = $(word 1, $(subst _, $(space), $(patsubst $(SUPPORT_BUILD_DIR)/%, %, $($(var)))))
-var_PKG_VERSION = $(word 2, $(subst _, $(space), $(subst /, $(space), $(patsubst $(SUPPORT_BUILD_DIR)/%, %, $($(var))))))
-
-$(foreach var, $(filter %_INCLUDE_DEP, $(.VARIABLES)), \
-  $(eval $(subst $(var_PKG_VERSION),%,$((var))): $(SUPPORT_SRC_DIR)/$(var_PKG_NAME)-% $(nl) \
-    $(tab)$P INSTALL-INCLUDE $(var_PKG_NAME) $(nl) \
-    $(tab)$(PKG_SCRIPT) install-include $(var_PKG_NAME) \
-	$(call SUPPORT_LOG_REDIRECT, $(SUPPORT_LOG_DIR)/$(var_PKG_NAME).log)))
 
 ifeq (0,1)
 

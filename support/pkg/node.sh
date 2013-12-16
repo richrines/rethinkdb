@@ -18,6 +18,7 @@ install () {
     mkdir -p "$install_dir/build"
     cp -a "$src_dir/." "$install_dir/build"
 
+    unset CXX
     in_dir "$install_dir/build" ./configure --prefix="$(niceabspath "$install_dir")"
     in_dir "$install_dir/build" make
     in_dir "$install_dir/build" make install

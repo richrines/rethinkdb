@@ -24,6 +24,7 @@ install () {
     mkdir -p "$install_dir/lib"
     test -e "$install_dir/build" && rm -rf "$install_dir/build"
     cp -ra "$src_dir" "$install_dir/build"
+    unset CXX
     make -C "$install_dir/build" native CXXFLAGS=-Wno-array-bounds
     find "$install_dir/build" -iname "*.o" | grep -v '\/preparser_lib\/' | xargs ar cqs "$install_dir/lib/libv8.a"
 }

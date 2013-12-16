@@ -451,7 +451,7 @@ var () {
     local val=$*
     show "$val"
     write "$name := $val"
-    eval "$name=$(quote "$val")"
+    eval "$name=$(quote "$val")" 2>/dev/null
 }
 
 # macro <name> <value>
@@ -688,7 +688,7 @@ add_fetch () {
     show fetch $pkg-$version
     if ! contains "$FETCH_LIST" "$pkg"; then
         var_append FETCH_LIST "$pkg"
-        var_append "$pkg_VERSION" "$version"
+        var "$pkg""_VERSION" "$version"
     fi
 }
 

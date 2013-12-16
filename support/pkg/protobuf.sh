@@ -26,7 +26,7 @@ install () {
     if [[ "$COMPILER $OS" = "CLANG Darwin" ]]; then
         ENV="env CXX=clang++ CXXFLAGS='-std=c++11 -stdlib=libc++' LDFLAGS=-lc++"
     else
-        ENV=
+        ENV="env CXX="
     fi
 
     in_dir "$install_dir/build" $ENV ./configure --prefix="$(niceabspath "$install_dir")"
