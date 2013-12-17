@@ -19,6 +19,8 @@ pkg_install () {
 
     in_dir "$install_dir/build" $ENV ./configure --prefix="$(niceabspath "$install_dir")"
     in_dir "$install_dir/build" $ENV make ${protobuf_install_target:-install}
+
+    # TODO: is there a platform that needs the library path to be adjusted like this?
     # local protoc="$install_dir/bin/protoc"
     # if test -e "$protoc"; then
     #     mv "$protoc" "$protoc-orig"

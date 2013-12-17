@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 
-# A simple package manager for RethinkDB dependencies
+# A simple package manager for RethinkDB dependencies 
 #
 # Each package is a shell script that defines:
 #
-#  install: Build and install the package into $install_dir
-#           If a build step is necessary, first copy the source from $src_dir into $install_dir/build
+#  pkg_install: Build and install the package into $install_dir
+#               If a build step is necessary, first copy the source from $src_dir into $install_dir/build
 #
-#  fetch: Fetch the package source into $src_dir
-#         The fetch function must fetch the source into a temporary directory
-#         And then move that temporary directory to $src_dir
+#  pkg_fetch: Fetch the package source into $src_dir
+#             The fetch function must fetch the source into a temporary directory
+#             And then move that temporary directory to $src_dir
 #
-#  install-include: Copy the include files to $install_dir/include
+#  pkg_install-include: Copy the include files to $install_dir/include
 #
 #  $version: The version of the package
 #
@@ -19,7 +19,7 @@
 # The first argument is the function that should be called
 # The second argument is usually the package to load
 # This script first defines utility functions used by the packages
-# Then it loads the given packge
+# Then it loads the given package
 # Then it calls the given command
 
 set -eu
@@ -68,7 +68,7 @@ pkg_fetch_archive () {
         *) error "don't know how to extract $archive"
     esac
 
-    set -- "$tmp_dir"/*
+    set -- "$tmp_dir"/*/
 
     if [[ "$#" != 1 ]]; then
         error "invalid archive contents: $archive"
@@ -81,6 +81,14 @@ pkg_fetch_archive () {
     pkg_remove_tmp_fetch_dir
 }
 
+pkg_fetch_git () {
+    pkg_make_tmp_fetch_dir
+
+    git_clone_tag "$src_git_repo" "${src_git_ref:-$version}" "$tmp_dir"
+
+    pkg_move_tmp_to_src
+}
+
 pkg_fetch () {
     if test -n "${src_url}"; then
         pkg_fetch_archive
@@ -89,9 +97,37 @@ pkg_fetch () {
     fi
 }
 
+pkg_move_tmp_to_src () {
+    test -e "$src_dir" && rm -rf "$src_dir"
+    mv "$tmp_dir" "$src_dir"
+}
+
 pkg_copy_src_to_build () {
     mkdir -p "$build_dir"
     cp -a "$src_dir/." "$build_dir"
+}
+
+pkg_install-include () {
+    test -e "$install_dir/include" && rm -rf "$install_dir/include"
+    mkdir -p "$install_dir/include"
+    if [[ -e "$src_dir/include" ]]; then
+        cp -a "$src_dir/include/." "$install_dir/include"
+    fi
+}
+
+pkg_configure () {
+    in_dir "$build_dir" ./configure --prefix="$(niceabspath "$install_dir")" "$@"
+}
+
+pkg_make () {
+    in_dir "$install_dir/build" make "$@"
+}
+
+
+pkg_install () {
+    pkg_copy_src_to_build
+    pkg_configure
+    pkg_make install
 }
 
 error () {
@@ -138,6 +174,7 @@ load_pkg () {
 
     src_dir=$pkg_dir/../src/$pkg\_$version
     install_dir=$pkg_dir/../../build/support/$pkg\_$version
+    build_dir=$install_dir/build
 }
 
 # Test if the package has already been fetched

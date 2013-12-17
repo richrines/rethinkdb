@@ -21,25 +21,22 @@ EOF
 )
 
 pkg_fetch () {
-    local tmp_dir
-    tmp_dir=$(mktemp -d "$src_dir.fetch-XXXXXXXX")
+    pkg_make_tmp_fetch_dir
     cp "$pkg_dir/$npm_package.shrinkwrap" "$tmp_dir/npm-shrinkwrap.json"
     echo "$package_json" > "$tmp_dir/package.json"
     in_dir "$tmp_dir" npm install
     in_dir "$tmp_dir" npm pack
     in_dir "$tmp_dir" rm -rf npm-shrinkwrap.json package.json node_modules
-    test -e "$src_dir" && rm -rf "$src_dir"
-    mv "$tmp_dir" "$src_dir"
+    pkg_move_tmp_to_src
 }
 
 pkg_shrinkwrap () {
-    local tmp_dir
-    tmp_dir=$(mktemp -d "$src_dir.fetch-XXXXXXXX")
+    pkg_make_tmp_fetch_dir
     echo "$package_json" > "$tmp_dir/package.json"
     in_dir "$tmp_dir" npm install
     in_dir "$tmp_dir" npm shrinkwrap
     cp "$tmp_dir/npm-shrinkwrap.json" "$pkg_dir/$npm_package.shrinkwrap"
-    rm -rf "$tmp_dir"
+    pkg_remove_tmp_fetch_dir
 }
 
 pkg_install () {
