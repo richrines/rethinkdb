@@ -34,13 +34,13 @@ support: $(foreach pkg, $(FETCH_LIST), support-$(pkg))
 # Download a dependency
 $(SUPPORT_SRC_DIR)/%:
 	$P FETCH $*
-	name='$*'; $(PKG_SCRIPT) fetch $${name%%_*} $(call SUPPORT_LOG_REDIRECT, $(SUPPORT_LOG_DIR)/$*.log)
+	name='$*'; $(PKG_SCRIPT) fetch $${name%%_*} $(call SUPPORT_LOG_REDIRECT, $(SUPPORT_LOG_DIR)/$*_fetch.log)
 
 # Lst of files that make expects the packages to install
 SUPPORT_TARGET_FILES := $(foreach var, $(filter %_LIBS_DEP %_BIN_DEP, $(.VARIABLES)), $($(var)))
 SUPPORT_INCLUDE_DIRS := $(foreach var, $(filter %_INCLUDE_DEP,        $(.VARIABLES)), $($(var)))
 
-# This function generates the suppport-* and fetch-* rules for a package
+# This function generates the suppport-* and fetch-* rules for each package
 # $1 = target files, $2 = pkg name, $3 = pkg version
 define support_rules
 
@@ -56,7 +56,7 @@ support-$2: support-$2_$3
 .PHONY: support-$2_$3
 support-$2_% $(foreach target,$1,$(subst _$3/,_%/,$(target))): $(SUPPORT_SRC_DIR)/$2_$3 | $(filter $(SUPPORT_BUILD_DIR)/$2_$3/include, $(SUPPORT_INCLUDE_DIRS))
 	$$P BUILD $2_$3
-	$$(PKG_SCRIPT) install $2 $$(call SUPPORT_LOG_REDIRECT, $$(SUPPORT_LOG_DIR)/$2_$3.log)
+	$$(PKG_SCRIPT) install $2 $$(call SUPPORT_LOG_REDIRECT, $$(SUPPORT_LOG_DIR)/$2_$3_install.log)
 
 endef
 
@@ -71,11 +71,12 @@ define support_include_rules
 
 # Install the include files for a given package
 .PHONY: support-include-$2 support-include-$2_$3
+.PRECIOUS: $3
 support-include-$2: support-include-$2_$3
 support-include-$2_% $(subst _$3/,_%/,$1): $(SUPPORT_SRC_DIR)/$2_$3
 	$$P INSTALL-INCLUDE $2_$3
-	$$(PKG_SCRIPT) install-include $2
-	  $$(call SUPPORT_LOG_REDIRECT, $$(SUPPORT_LOG_DIR)/$2_$3.log)
+	$$(PKG_SCRIPT) install-include $2 \
+	  $$(call SUPPORT_LOG_REDIRECT, $$(SUPPORT_LOG_DIR)/$2_$3_install-include.log)
 	touch $1
 
 endef
@@ -85,37 +86,3 @@ include_PKG_NAME = $(word 1, $(subst _, $(space), $(patsubst $(SUPPORT_BUILD_DIR
 include_PKG_VERSION = $(word 2, $(subst _, $(space), $(subst /, $(space), $(patsubst $(SUPPORT_BUILD_DIR)/%, %, $(include)))))
 $(foreach include, $(SUPPORT_INCLUDE_DIRS), \
   $(eval $(call support_include_rules,$(include),$(include_PKG_NAME),$(include_PKG_VERSION))))
-
-
-
-ifeq (0,1)
-
-
-
-$(GPERFTOOLS_SRC_DIR):
-	$P DOWNLAOD gperftools
-	$(GETURL) http://gperftools.googlecode.com/files/gperftools-2.1.tar.gz | ( \
-	  cd $(TC_SRC_DIR) && \
-	  tar -xzf - && \
-	  rm -rf gperftools && \
-	  mv gperftools-2.1 gperftools )
-
-$(LIBUNWIND_SRC_DIR):
-	$P DOWNLOAD libunwind
-	$(GETURL) http://gnu.mirrors.pair.com/savannah/savannah//libunwind/libunwind-1.1.tar.gz | ( \
-	  cd $(TC_SRC_DIR) && \
-	  tar -xzf - && \
-	  rm -rf libunwind && \
-	  mv libunwind-1.1 libunwind )
-
-$(LIBUNWIND_DIR): $(LIBUNWIND_SRC_DIR)
-
-# TODO: don't use colonize.sh
-# TODO: seperate step and variable for building $(UNWIND_INT_LIB)
-$(TCMALLOC_MINIMAL_INT_LIB): $(LIBUNWIND_DIR) $(GPERFTOOLS_DIR)
-	$P MAKE libunwind gperftools
-	cd $(TOP)/support/build && rm -f native_list.txt semistaged_list.txt staged_list.txt boost_list.txt post_boost_list.txt && touch native_list.txt semistaged_list.txt staged_list.txt boost_list.txt post_boost_list.txt && echo libunwind >> semistaged_list.txt && echo gperftools >> semistaged_list.txt && cp -pRP $(COLONIZE_SCRIPT_ABS) ./ && ( unset PREFIX && unset prefix && unset MAKEFLAGS && unset MFLAGS && unset DESTDIR && bash ./colonize.sh ; )
-
-
-
-endif

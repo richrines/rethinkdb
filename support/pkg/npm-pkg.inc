@@ -20,7 +20,7 @@ package_json=$(cat <<EOF
 EOF
 )
 
-fetch () {
+pkg_fetch () {
     local tmp_dir
     tmp_dir=$(mktemp -d "$src_dir.fetch-XXXXXXXX")
     cp "$pkg_dir/$npm_package.shrinkwrap" "$tmp_dir/npm-shrinkwrap.json"
@@ -32,7 +32,7 @@ fetch () {
     mv "$tmp_dir" "$src_dir"
 }
 
-shrinkwrap () {
+pkg_shrinkwrap () {
     local tmp_dir
     tmp_dir=$(mktemp -d "$src_dir.fetch-XXXXXXXX")
     echo "$package_json" > "$tmp_dir/package.json"
@@ -42,7 +42,7 @@ shrinkwrap () {
     rm -rf "$tmp_dir"
 }
 
-install () {
+pkg_install () {
     rm -rf "$install_dir" || : 2>/dev/null
     mkdir -p "$install_dir/node_modules"
     local tgz

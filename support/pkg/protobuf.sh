@@ -1,26 +1,14 @@
 
 version=2.5.0
 
-fetch () {
-    local tmp_dir
-    tmp_dir=$(mktemp -d "$src_dir.fetch-XXXXXXXX")
+src_url=http://protobuf.googlecode.com/files/protobuf-$version.tar.bz2
 
-    local archive=protobuf-$version.tar.bz2
-    geturl http://protobuf.googlecode.com/files/$archive > "$tmp_dir/$archive"
-    in_dir "$tmp_dir" tar -xjf $archive
-
-    test -e "$src_dir" && rm -rf "$src_dir"
-    mv "$tmp_dir/protobuf-$version" "$src_dir"
-    rm -rf "$tmp_dir"
+pkg_install-include () {
+    protobuf_install_target=install-data pkg_install
 }
 
-install-include () {
-    protobuf_install_target=install-data install
-}
-
-install () {
-    mkdir -p "$install_dir/build"
-    cp -a "$src_dir/." "$install_dir/build"
+pkg_install () {
+    pkg_copy_src_to_build
 
     local ENV
     if [[ "$COMPILER $OS" = "CLANG Darwin" ]]; then

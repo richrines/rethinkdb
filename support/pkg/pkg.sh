@@ -36,8 +36,67 @@ COMPILER=${COMPILER:-}
 CXX=${CXX:-}
 
 # Print the version number of the package
-version () {
+pkg_version () {
     echo $version
+}
+
+pkg_environment () {
+    test -d "$install_dir/include" && echo "export CXXFLAGS=\"\${LDFLAGS:-} -isystem $(niceabspath "$install_dir/include")\"" || :
+    test -d "$install_dir/lib" && echo "export LDFLAGS=\"\${LDFLAGS:-} -L$(niceabspath "$install_dir/lib")\"" || :
+    test -d "$install_dir/bin" && echo "export PATH=\"$(niceabspath "$install_dir/bin"):\$PATH\"" || :
+}
+
+pkg_make_tmp_fetch_dir () {
+    tmp_dir=$(mktemp -d "$src_dir.fetch-XXXXXXXX")
+}
+
+pkg_remove_tmp_fetch_dir () {
+    rm -rf "$tmp_dir"
+}
+
+pkg_fetch_archive () {
+    pkg_make_tmp_fetch_dir
+
+    local archive="${src_url##*/}"
+    geturl "$src_url" > "$tmp_dir/$archive"
+
+    local ext
+    case "$archive" in
+        *.tgz)     ext=tgz;     in_dir "$tmp_dir" tar -xzf "$archive" ;;
+        *.tar.gz)  ext=tar.gz;  in_dir "$tmp_dir" tar -xzf "$archive" ;;
+        *.tar.bz2) ext=tar.bz2; in_dir "$tmp_dir" tar -xjf "$archive" ;;
+        *) error "don't know how to extract $archive"
+    esac
+
+    set -- "$tmp_dir"/*
+
+    if [[ "$#" != 1 ]]; then
+        error "invalid archive contents: $archive"
+    fi
+
+    test -e "$src_dir" && rm -rf "$src_dir"
+
+    mv "$1" "$src_dir"
+
+    pkg_remove_tmp_fetch_dir
+}
+
+pkg_fetch () {
+    if test -n "${src_url}"; then
+        pkg_fetch_archive
+    else
+        error "fetch command for $pkg is broken. \$src_url should be defined"
+    fi
+}
+
+pkg_copy_src_to_build () {
+    mkdir -p "$build_dir"
+    cp -a "$src_dir/." "$build_dir"
+}
+
+error () {
+    echo "$*" >&2
+    exit 1
 }
 
 # Include a file local to $pkg_dir
@@ -76,6 +135,7 @@ in_dir () {
 load_pkg () {
     pkg=$1
     include "$pkg.sh"
+
     src_dir=$pkg_dir/../src/$pkg\_$version
     install_dir=$pkg_dir/../../build/support/$pkg\_$version
 }
@@ -109,6 +169,12 @@ geturl () {
     fi
 }
 
+pkg_script=$(niceabspath "$0")
+
+pkg () {
+    $pkg_script "$@"
+}
+
 # Read the command
 cmd=$1
 shift
@@ -118,4 +184,4 @@ load_pkg "$1"
 shift
 
 # Run the command
-"$cmd" "$@"
+pkg_"$cmd" "$@" || { echo $0: failed command: $cmd $pkg "$@" >&2 ; false ; }
