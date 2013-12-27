@@ -54,7 +54,7 @@ support-$2: support-$2_$3
 
 # The actual rule that builds the package
 .PHONY: support-$2_$3
-support-$2_% $(foreach target,$1,$(subst _$3/,_%/,$(target))): $(SUPPORT_SRC_DIR)/$2_$3 | $(filter $(SUPPORT_BUILD_DIR)/$2_$3/include, $(SUPPORT_INCLUDE_DIRS))
+$(error support-$2_% $(foreach target,$1,$(subst _$3/,_%/,$(target))): $(SUPPORT_SRC_DIR)/$2_$3 | $(filter $(SUPPORT_BUILD_DIR)/$2_$3/include, $(SUPPORT_INCLUDE_DIRS)))
 	$$P BUILD $2_$3
 	$$(PKG_SCRIPT) install $2 $$(call SUPPORT_LOG_REDIRECT, $$(SUPPORT_LOG_DIR)/$2_$3_install.log)
 
