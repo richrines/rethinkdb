@@ -36,7 +36,7 @@ $(SUPPORT_SRC_DIR)/%:
 	$P FETCH $*
 	name='$*'; $(PKG_SCRIPT) fetch $${name%%_*} $(call SUPPORT_LOG_REDIRECT, $(SUPPORT_LOG_DIR)/$*_fetch.log)
 
-# Lst of files that make expects the packages to install
+# List of files that make expects the packages to install
 SUPPORT_TARGET_FILES := $(foreach var, $(filter %_LIBS_DEP %_BIN_DEP, $(.VARIABLES)), $($(var)))
 SUPPORT_INCLUDE_DIRS := $(foreach var, $(filter %_INCLUDE_DEP,        $(.VARIABLES)), $($(var)))
 
@@ -53,8 +53,8 @@ fetch-$2: $$(SUPPORT_SRC_DIR)/$2_$3
 support-$2: support-$2_$3
 
 # The actual rule that builds the package
-.PHONY: support-$2_$3
-$(error support-$2_% $(foreach target,$1,$(subst _$3/,_%/,$(target))): $(SUPPORT_SRC_DIR)/$2_$3 | $(filter $(SUPPORT_BUILD_DIR)/$2_$3/include, $(SUPPORT_INCLUDE_DIRS)))
+#.PHONY: support-$2_$3
+support-$2_% $(foreach target,$1,$(subst _$3/,_%/,$(target))): $(SUPPORT_SRC_DIR)/$2_$3 | $(filter $(SUPPORT_BUILD_DIR)/$2_$3/include, $(SUPPORT_INCLUDE_DIRS))
 	$$P BUILD $2_$3
 	$$(PKG_SCRIPT) install $2 $$(call SUPPORT_LOG_REDIRECT, $$(SUPPORT_LOG_DIR)/$2_$3_install.log)
 

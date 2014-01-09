@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# A simple package manager for RethinkDB dependencies 
+# A simple package manager for RethinkDB dependencies
 #
 # Each package is a shell script that defines:
 #
@@ -40,8 +40,9 @@ pkg_version () {
     echo $version
 }
 
+# Generate shell commands that add the paths for this package to the environment
 pkg_environment () {
-    test -d "$install_dir/include" && echo "export CXXFLAGS=\"\${LDFLAGS:-} -isystem $(niceabspath "$install_dir/include")\"" || :
+    test -d "$install_dir/include" && echo "export CXXFLAGS=\"\${CXXFLAGS:-} -isystem $(niceabspath "$install_dir/include")\"" || :
     test -d "$install_dir/lib" && echo "export LDFLAGS=\"\${LDFLAGS:-} -L$(niceabspath "$install_dir/lib")\"" || :
     test -d "$install_dir/bin" && echo "export PATH=\"$(niceabspath "$install_dir/bin"):\$PATH\"" || :
 }
@@ -108,6 +109,8 @@ pkg_copy_src_to_build () {
 }
 
 pkg_install-include () {
+    pkg_depends_env
+
     test -e "$install_dir/include" && rm -rf "$install_dir/include"
     mkdir -p "$install_dir/include"
     if [[ -e "$src_dir/include" ]]; then
@@ -123,15 +126,28 @@ pkg_make () {
     in_dir "$install_dir/build" make "$@"
 }
 
-
 pkg_install () {
+    if ! fetched; then
+        error "cannot install package, it has not been fetched"
+    fi
+    pkg_depends_env
     pkg_copy_src_to_build
     pkg_configure
     pkg_make install
 }
 
+pkg_depends () {
+    true
+}
+
+pkg_depends_env () {
+    for dep in $(pkg_depends); do
+        eval "$(pkg environment $dep)"
+    done
+}
+
 error () {
-    echo "$*" >&2
+    echo "$0: ${pkg:-unknown}: $*" >&2
     exit 1
 }
 
@@ -221,4 +237,4 @@ load_pkg "$1"
 shift
 
 # Run the command
-pkg_"$cmd" "$@" || { echo $0: failed command: $cmd $pkg "$@" >&2 ; false ; }
+pkg_"$cmd" "$@"

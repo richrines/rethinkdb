@@ -687,8 +687,13 @@ add_fetch () {
     fi
     show fetch $pkg-$version
     if ! contains "$FETCH_LIST" "$pkg"; then
+        local depends=$(bash $root/support/pkg/pkg.sh depends "$pkg")
+        for dep in $depends; do
+            add_fetch $dep
+        done
         var_append FETCH_LIST "$pkg"
         var "$pkg""_VERSION" "$version"
+        var "$pkg""_DEPENDS" "$depends"
     fi
 }
 
