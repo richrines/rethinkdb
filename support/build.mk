@@ -16,11 +16,6 @@
 #  * When defining a macro to be used with $(eval $(call ...)), escape variables
 #    and function calls using `$$'.
 
-# Recurrent directories
-SUPPORT_SRC_DIR := $/support/src
-SUPPORT_BUILD_DIR := $(BUILD_ROOT_DIR)/support
-SUPPORT_LOG_DIR := $(SUPPORT_BUILD_DIR)
-
 # How to call the pkg.sh script
 PKG_SCRIPT_VARIABLES := WGET CURL OS FETCH_LIST
 PKG_SCRIPT := $(foreach v, $(PKG_SCRIPT_VARIABLES), $v='$($v)') MAKEFLAGS= $/support/pkg/pkg.sh
