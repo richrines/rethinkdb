@@ -15,7 +15,7 @@ SUPPORT_BUILD_DIR := $(BUILD_ROOT_DIR)/support
 SUPPORT_LOG_DIR := $(SUPPORT_BUILD_DIR)
 
 # How to call the pkg.sh script
-PKG_SCRIPT_VARIABLES := WGET CURL OS COMPILER CXX
+PKG_SCRIPT_VARIABLES := WGET CURL OS COMPILER CXX FETCH_LIST
 PKG_SCRIPT := $(foreach v, $(PKG_SCRIPT_VARIABLES), $v='$($v)') MAKEFLAGS= $/support/pkg/pkg.sh
 
 # How to log the output of fetching and building packages
@@ -52,11 +52,16 @@ fetch-$2: $$(SUPPORT_SRC_DIR)/$2_$3
 .PHONY: support-$2
 support-$2: support-$2_$3
 
+.PHONY: support-$2_$3
+support-$2_$3: | $1
+
 # The actual rule that builds the package
-#.PHONY: support-$2_$3
-support-$2_% $(foreach target,$1,$(subst _$3/,_%/,$(target))): $(SUPPORT_SRC_DIR)/$2_$3 | $(filter $(SUPPORT_BUILD_DIR)/$2_$3/include, $(SUPPORT_INCLUDE_DIRS))
+rebuild-$2_% $(foreach target,$1,$(subst _$3/,_%/,$(target))) $(SUPPORT_BUILD_DIR)/$2_%/install.witness: \
+  $(SUPPORT_SRC_DIR)/$2_$3 | $(filter $(SUPPORT_BUILD_DIR)/$2_$3/include, $(SUPPORT_INCLUDE_DIRS)) \
+  $(foreach dep, $($(pkg)_DEPENDS), $(SUPPORT_BUILD_DIR)/$(dep)_$($(dep)_VERSION)/install.witness)
 	$$P BUILD $2_$3
 	$$(PKG_SCRIPT) install $2 $$(call SUPPORT_LOG_REDIRECT, $$(SUPPORT_LOG_DIR)/$2_$3_install.log)
+	touch $(SUPPORT_BUILD_DIR)/$2_$3/install.witness
 
 endef
 

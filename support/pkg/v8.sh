@@ -14,6 +14,6 @@ pkg_install () {
     pkg_copy_src_to_build
     mkdir -p "$install_dir/lib"
     unset CXX
-    make -C "$install_dir/build" native CXXFLAGS=-Wno-array-bounds
-    find "$install_dir/build" -iname "*.o" | grep -v '\/preparser_lib\/' | xargs ar cqs "$install_dir/lib/libv8.a"
+    pkg_make native CXXFLAGS="-Wno-array-bounds -Wno-unused-local-typedefs -Wno-aggressive-loop-optimizations"
+    find "$build_dir" -iname "*.o" | grep -v '\/preparser_lib\/' | xargs ar cqs "$install_dir/lib/libv8.a"
 }

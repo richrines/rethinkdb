@@ -2,7 +2,7 @@
 
 # A simple package manager for RethinkDB dependencies
 #
-# Each package is a shell script that defines:
+# Each package is a shell script that can override these functions:
 #
 #  pkg_install: Build and install the package into $install_dir
 #               If a build step is necessary, first copy the source from $src_dir into $install_dir/build
@@ -12,6 +12,8 @@
 #             And then move that temporary directory to $src_dir
 #
 #  pkg_install-include: Copy the include files to $install_dir/include
+#
+#  pkg_depends: List the other packages that the package depends on
 #
 #  $version: The version of the package
 #
@@ -34,6 +36,7 @@ CURL=${CURL:-}
 OS=${OS:-}
 COMPILER=${COMPILER:-}
 CXX=${CXX:-}
+FETCH_LIST=${FETCH_LIST:-}
 
 # Print the version number of the package
 pkg_version () {
@@ -109,8 +112,6 @@ pkg_copy_src_to_build () {
 }
 
 pkg_install-include () {
-    pkg_depends_env
-
     test -e "$install_dir/include" && rm -rf "$install_dir/include"
     mkdir -p "$install_dir/include"
     if [[ -e "$src_dir/include" ]]; then
@@ -130,7 +131,6 @@ pkg_install () {
     if ! fetched; then
         error "cannot install package, it has not been fetched"
     fi
-    pkg_depends_env
     pkg_copy_src_to_build
     pkg_configure
     pkg_make install
@@ -193,6 +193,15 @@ load_pkg () {
     build_dir=$install_dir/build
 }
 
+contains () {
+    local d=" $1 "
+    [ "${d% $2 *}" != "$d" ]
+}
+
+will_fetch () {
+    contains "$FETCH_LIST" "$1"
+}
+
 # Test if the package has already been fetched
 fetched () {
     test -e "$src_dir"
@@ -235,6 +244,9 @@ shift
 # Load the package
 load_pkg "$1"
 shift
+
+# Prepare the environment
+pkg_depends_env
 
 # Run the command
 pkg_"$cmd" "$@"

@@ -57,3 +57,9 @@ pkg_install () {
         chmod +x "$script"
     done
 }
+
+pkg_depends () {
+    if will_fetch node; then
+        echo node
+    fi
+}
