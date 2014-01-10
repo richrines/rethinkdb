@@ -10,15 +10,13 @@ pkg_install-include () {
 pkg_install () {
     pkg_copy_src_to_build
 
-    local ENV
-    if [[ "$COMPILER $OS" = "CLANG Darwin" ]]; then
+    local ENV=
+    if [[ "$OS" = "Darwin" ]]; then
         ENV="env CXX=clang++ CXXFLAGS='-std=c++11 -stdlib=libc++' LDFLAGS=-lc++"
-    else
-        ENV="env CXX="
     fi
 
-    in_dir "$install_dir/build" $ENV ./configure --prefix="$(niceabspath "$install_dir")"
-    in_dir "$install_dir/build" $ENV make ${protobuf_install_target:-install}
+    in_dir "$build_dir" $ENV ./configure --prefix="$(niceabspath "$install_dir")"
+    in_dir "$build_dir" $ENV make ${protobuf_install_target:-install}
 
     # TODO: is there a platform that needs the library path to be adjusted like this?
     # local protoc="$install_dir/bin/protoc"

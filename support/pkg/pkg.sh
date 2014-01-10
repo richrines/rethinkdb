@@ -34,8 +34,6 @@ conf_dir=$pkg_dir/../config
 WGET=${WGET:-}
 CURL=${CURL:-}
 OS=${OS:-}
-COMPILER=${COMPILER:-}
-CXX=${CXX:-}
 FETCH_LIST=${FETCH_LIST:-}
 
 # Print the version number of the package

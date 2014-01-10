@@ -22,7 +22,7 @@ SUPPORT_BUILD_DIR := $(BUILD_ROOT_DIR)/support
 SUPPORT_LOG_DIR := $(SUPPORT_BUILD_DIR)
 
 # How to call the pkg.sh script
-PKG_SCRIPT_VARIABLES := WGET CURL OS COMPILER CXX FETCH_LIST
+PKG_SCRIPT_VARIABLES := WGET CURL OS FETCH_LIST
 PKG_SCRIPT := $(foreach v, $(PKG_SCRIPT_VARIABLES), $v='$($v)') MAKEFLAGS= $/support/pkg/pkg.sh
 
 # How to log the output of fetching and building packages
@@ -46,6 +46,8 @@ $(SUPPORT_SRC_DIR)/%:
 # List of files that make expects the packages to install
 SUPPORT_TARGET_FILES := $(foreach var, $(filter %_LIBS_DEP %_BIN_DEP, $(.VARIABLES)), $($(var)))
 SUPPORT_INCLUDE_DIRS := $(foreach var, $(filter %_INCLUDE_DEP,        $(.VARIABLES)), $($(var)))
+
+.PRECIOUS: $(SUPPORT_INCLUDE_DIRS)
 
 # This function generates the suppport-* and fetch-* rules for each package
 # $1 = target files, $2 = pkg name, $3 = pkg version
