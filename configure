@@ -338,8 +338,8 @@ error_missing_arg () { die "option ${1%%=*} takes an argument"; }
 error () {
     local req=$required
     if ${delay_errors:-false}; then
-	delayed_error="$*"
-	return
+        delayed_error="$*"
+        return
     fi
     local type
     if $req; then
@@ -374,13 +374,13 @@ die () {
 # Generate a not found error
 not_found () {
     if $required; then
-	if can_fetch "`lc $1`"; then
+        if can_fetch "`lc $1`"; then
             error "missing $1. Install it, specify the full path with $(uc $1)= or run ./configure with --allow-fetch"
-	else
+        else
             error "missing $1. Install it or specify the full path with $(uc $1)="
-	fi
+        fi
     else
-	show no
+        show no
     fi
 }
 
@@ -395,7 +395,7 @@ write () {
 # A call to show will complete the line
 show_descr () {
     if ${can_show:-false}; then
-	show_no
+        show_no
     fi
     local padded="$*:                               "
     echo -n "${padded:0:32}"
@@ -410,9 +410,9 @@ show_no () {
     local err=$delayed_error
     show no
     if $req; then
-	error "${err:-${1:-} not found}"
+        error "${err:-${1:-} not found}"
     elif [[ -n "$delayed_error" ]]; then
-	error "$err"
+        error "$err"
     fi
 }
 
@@ -801,8 +801,8 @@ check_lib () {
     local aliases
     lookup "$lib_alias" $1 aliases || aliases=
     for lib in $1 $aliases; do
-	$check $lib $1
-	if ! $can_show; then
+        $check $lib $1
+        if ! $can_show; then
             var "$(uc $1)_INCLUDE" ""
             var "$(uc $1)_INCLUDE_DEP" ""
             var "$(uc $1)_LIBS_DEP" ""
@@ -830,7 +830,7 @@ check_lib_compile () {
     echo "$code" > "$bfile.cc"
     if "$CXX" ${CXXFLAGS:-} ${LDFLAGS:-} ${LIB_SEARCH_PATHS:-} "$bfile.cc" $1 -o "$bfile.out" 1>"$bfile.log" 2>&1; then
         show "${1:-ok}"
-	var_append $(uc $2)_LIBS "$1"
+        var_append $(uc $2)_LIBS "$1"
     else
         error_details="${error_details:-}"$(cat "$bfile.log")
     fi
@@ -846,8 +846,8 @@ check_static_lib () {
 # Find a static library and print it's path
 static_lib_lookup () {
     for path in $try_lib_paths; do
-	local l=$path/lib$1.a
-	test -f $l && echo $l && return 0
+        local l=$path/lib$1.a
+        test -f $l && echo $l && return 0
     done
 }
 
