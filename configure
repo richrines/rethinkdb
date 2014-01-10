@@ -953,11 +953,12 @@ pkg_name () {
     case "$1" in
         protoc) echo protobuf ;;
         tcmalloc_minimal) echo gperftools ;;
+        tcmalloc) echo gperftools ;;
         lessc) echo less ;;
         coffee) echo coffee-script ;;
         proto2js) echo protobufjs ;;
         npm) echo node ;;
-        *) echo "$1"
+        *) echo "$1" ;;
     esac
 }
 

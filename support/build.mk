@@ -3,11 +3,18 @@
 # Rules for downloading and building dependencies
 #
 # These rules are governed by the settings generated from ./configure
-# Namely, the FETCH_LIST, *_VERSION and *_DEP variables
+# Such as the FETCH_LIST, *_VERSION, *_DEPENDS and *_DEP variables
 #
 # Some of these rules are complicated and delicate. They try to convince make to:
 #  * not rebuild files that are already built
 #  * not wait on files to be built when they are not needed yet
+#
+# Some things to remmeber when using GNU make:
+#  * If a target uses a pattern rule, do not mark it as phony.
+#  * Use a pattern rule if a single recipe generates multiple targets.
+#  * Mark all folder prerequisites as order-only (using `|').
+#  * When defining a macro to be used with $(eval $(call ...)), escape variables
+#    and function calls using `$$'.
 
 # Recurrent directories
 SUPPORT_SRC_DIR := $/support/src
@@ -57,8 +64,8 @@ support-$2_$3: | $1
 
 # The actual rule that builds the package
 rebuild-$2_% $(foreach target,$1,$(subst _$3/,_%/,$(target))) $(SUPPORT_BUILD_DIR)/$2_%/install.witness: \
-  $(SUPPORT_SRC_DIR)/$2_$3 | $(filter $(SUPPORT_BUILD_DIR)/$2_$3/include, $(SUPPORT_INCLUDE_DIRS)) \
-  $(foreach dep, $($(pkg)_DEPENDS), $(SUPPORT_BUILD_DIR)/$(dep)_$($(dep)_VERSION)/install.witness)
+  | $(SUPPORT_SRC_DIR)/$2_$3 $(filter $(SUPPORT_BUILD_DIR)/$2_$3/include, $(SUPPORT_INCLUDE_DIRS)) \
+  $(foreach dep, $($2_DEPENDS), $(SUPPORT_BUILD_DIR)/$(dep)_$($(dep)_VERSION)/install.witness)
 	$$P BUILD $2_$3
 	$$(PKG_SCRIPT) install $2 $$(call SUPPORT_LOG_REDIRECT, $$(SUPPORT_LOG_DIR)/$2_$3_install.log)
 	touch $(SUPPORT_BUILD_DIR)/$2_$3/install.witness
@@ -78,7 +85,7 @@ define support_include_rules
 .PHONY: support-include-$2 support-include-$2_$3
 .PRECIOUS: $3
 support-include-$2: support-include-$2_$3
-support-include-$2_% $(subst _$3/,_%/,$1): $(SUPPORT_SRC_DIR)/$2_$3
+support-include-$2_% $(subst _$3/,_%/,$1): | $(SUPPORT_SRC_DIR)/$2_$3
 	$$P INSTALL-INCLUDE $2_$3
 	$$(PKG_SCRIPT) install-include $2 \
 	  $$(call SUPPORT_LOG_REDIRECT, $$(SUPPORT_LOG_DIR)/$2_$3_install-include.log)
