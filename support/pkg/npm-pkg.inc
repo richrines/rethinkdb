@@ -2,7 +2,7 @@
 
 # Fetch and build an npm package
 
-# Expects npm_package_name to be set
+# Expects npm_package to be set
 
 npm_conf=$(niceabspath "$conf_dir/npm.conf")
 

@@ -23,7 +23,7 @@ $(PROTO_MODULE): $(PROTO_FILE) | $(PROTO2JS_BIN_DEP) $(JS_BUILD_DIR)/.
 	$(PROTO2JS) $< -commonjs > $@
 
 # Must be synced with the list in package.json
-JS_PKG_FILES := $(DRIVER_COMPILED_COFFEE) $(JS_SRC_DIR)/README.md $(PROTO_MODULE) $(PB_BIN_FILE) $(JS_SRC_DIR)/package.json $(JS_SRC_DIR)/npm-shrinkwrap.json
+JS_PKG_FILES := $(DRIVER_COMPILED_COFFEE) $(JS_SRC_DIR)/README.md $(PROTO_MODULE) $(PB_BIN_FILE) $(JS_SRC_DIR)/package.json
 
 .SECONDARY: $(DRIVER_COFFEE_BUILD_DIR)/.
 $(DRIVER_COFFEE_BUILD_DIR)/%.js: $(JS_SRC_DIR)/%.coffee | $(DRIVER_COFFEE_BUILD_DIR)/. $(COFFEE_BIN_DEP)
@@ -31,7 +31,7 @@ $(DRIVER_COFFEE_BUILD_DIR)/%.js: $(JS_SRC_DIR)/%.coffee | $(DRIVER_COFFEE_BUILD_
 	$(COFFEE) -b -p -c $< > $@
 
 $(JS_PKG_DIR): $(JS_PKG_FILES)
-	$P DIST-JS $(JS_PKG_DIR)
+	$P CP $(JS_PKG_DIR)
 	rm -rf $(JS_PKG_DIR)
 	mkdir -p $(JS_PKG_DIR)
 	cp $(JS_PKG_FILES) $(JS_PKG_DIR)
@@ -40,9 +40,7 @@ $(JS_PKG_DIR): $(JS_PKG_FILES)
 js-publish: TMPFILE=$(shell mktemp)
 js-publish: $(JS_PKG_DIR)
 	$P PUBLISH-JS $(JS_PKG_DIR)
-	mv $(JS_PKG_DIR)/npm-shrinkwrap.json $(TMPFILE)
 	cd $(JS_PKG_DIR) && npm publish
-	mv $(TMPFILE) $(JS_PKG_DIR)/npm-shrinkwrap.json
 
 .PHONY: js-clean
 js-clean:
@@ -58,21 +56,18 @@ js-install: $(JS_PKG_DIR) | $(NPM_BIN_DEP)
 .PHONY: js-dependencies
 js-dependencies: $(JS_PKG_DIR)/node_modules
 
-$(JS_PKG_DIR)/node_modules: $(JS_PKG_DIR) | $(NPM_BIN_DEP)
-	$P NPM-I dependencies
-	( cd $(JS_PKG_DIR) && \
-	  MAKEFLAGS= $(abspath $(NPM)) install --prefix $(abspath $(JS_PKG_DIR)) \
-	    > $(abspath $(JS_PKG_DIR)/.npm_install_log) 2>&1 \
-	) || ( \
-	  echo === npm install failed === ; \
-	  cat $(JS_PKG_DIR)/.npm_install_log ; \
-	  false \
-	)
+PROTOBUFJS_MODULE_DIR := $(SUPPORT_BUILD_DIR)/protobufjs_$(protobufjs_VERSION)/node_modules/packed-protobufjs/node_modules/protobufjs
+
+$(PROTOBUFJS_MODULE_DIR): $(SUPPORT_BUILD_DIR)/protobufjs_$(protobufjs_VERSION)/install.witness
+
+$(JS_PKG_DIR)/node_modules: $(PROTOBUFJS_MODULE_DIR) $(JS_PKG_DIR) | $(NPM_BIN_DEP) $(JS_PKG_DIR)/node_modules/.
+	$P CP $@/protobufjs
+	cp -a $(PROTOBUFJS_MODULE_DIR)/. $@/protobufjs
 
 $(JS_BUILD_DIR)/rethinkdb.js: $(JS_PKG_DIR) $(JS_PKG_DIR)/node_modules | $(BROWSERIFY_BIN_DEP)
 	$P BROWSERIFY
 	cd $(JS_PKG_DIR) && \
-		$(abspath $(BROWSERIFY)) --require ./rethinkdb:rethinkdb --outfile $(abspath $@)
+	  $(abspath $(BROWSERIFY)) --require ./rethinkdb:rethinkdb --outfile $(abspath $@)
 
 .PHONY: js-driver
 js-driver: $(JS_BUILD_DIR)/rethinkdb.js
