@@ -6,10 +6,8 @@
 
 npm_conf=$(niceabspath "$conf_dir/npm.conf")
 
-real_npm=$(which npm)
-
 npm () {
-    "$real_npm" --userconfig "$npm_conf" --no-cache "$@"
+    "$NPM" --userconfig "$npm_conf" "$@"
 }
 
 package_json=$(cat <<EOF
@@ -24,16 +22,18 @@ pkg_fetch () {
     pkg_make_tmp_fetch_dir
     cp "$pkg_dir/$npm_package.shrinkwrap" "$tmp_dir/npm-shrinkwrap.json"
     echo "$package_json" > "$tmp_dir/package.json"
-    in_dir "$tmp_dir" npm install
+    mkdir "$tmp_dir/node_modules"
+    in_dir "$tmp_dir" npm --cache "$tmp_dir/npm-cache" install
     in_dir "$tmp_dir" npm pack
-    in_dir "$tmp_dir" rm -rf npm-shrinkwrap.json package.json node_modules
+    in_dir "$tmp_dir" rm -rf npm-shrinkwrap.json package.json node_modules npm-cache
     pkg_move_tmp_to_src
 }
 
 pkg_shrinkwrap () {
     pkg_make_tmp_fetch_dir
     echo "$package_json" > "$tmp_dir/package.json"
-    in_dir "$tmp_dir" npm install
+    mkdir "$tmp_dir/node_modules"
+    in_dir "$tmp_dir" npm --cache "$tmp_dir/npm-cache" install
     in_dir "$tmp_dir" npm shrinkwrap
     cp "$tmp_dir/npm-shrinkwrap.json" "$pkg_dir/$npm_package.shrinkwrap"
     pkg_remove_tmp_fetch_dir

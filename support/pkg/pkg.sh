@@ -26,16 +26,6 @@
 
 set -eu
 
-# Configure some default paths
-pkg_dir=$(dirname $0)
-conf_dir=$pkg_dir/../config
-
-# These variables should be passed to this script from support/build.mk
-WGET=${WGET:-}
-CURL=${CURL:-}
-OS=${OS:-}
-FETCH_LIST=${FETCH_LIST:-}
-
 # Print the version number of the package
 pkg_version () {
     echo $version
@@ -186,9 +176,9 @@ load_pkg () {
     pkg=$1
     include "$pkg.sh"
 
-    src_dir=$pkg_dir/../src/$pkg\_$version
-    install_dir=$pkg_dir/../../build/support/$pkg\_$version
-    build_dir=$install_dir/build
+    src_dir=$(niceabspath "$pkg_dir/../src/$pkg""_$version")
+    install_dir=$(niceabspath "$pkg_dir/../../build/support/$pkg""_$version")
+    build_dir=$(niceabspath "$install_dir/build")
 }
 
 contains () {
@@ -234,6 +224,17 @@ pkg_script=$(niceabspath "$0")
 pkg () {
     $pkg_script "$@"
 }
+
+# Configure some default paths
+pkg_dir=$(niceabspath "$(dirname $0)")
+conf_dir=$(niceabspath "$pkg_dir/../config")
+
+# These variables should be passed to this script from support/build.mk
+WGET=${WGET:-}
+CURL=${CURL:-}
+OS=${OS:-}
+# FETCH_LIST
+# NPM
 
 # Read the command
 cmd=$1

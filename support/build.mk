@@ -17,7 +17,7 @@
 #  * inside macros, variables and function calls are escaped using `$$'
 
 # How to call the pkg.sh script
-PKG_SCRIPT_VARIABLES := WGET CURL OS FETCH_LIST
+PKG_SCRIPT_VARIABLES := WGET CURL NPM OS FETCH_LIST
 PKG_SCRIPT := $(foreach v, $(PKG_SCRIPT_VARIABLES), $v='$($v)') MAKEFLAGS= $/support/pkg/pkg.sh
 
 # How to log the output of fetching and building packages
