@@ -973,7 +973,6 @@ can_fetch () {
 all_fetch_deps () {
     local ret=
     for dep in $all_deps; do
-        echo dep: $dep >&2
         if can_fetch $dep; then
             ret="$ret $(pkg_name "$dep")"
         fi
