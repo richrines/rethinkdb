@@ -18,7 +18,7 @@ $(PB_BIN_FILE): $(PROTO_FILE) | $(JS_BUILD_DIR)/. $(PROTOC_BIN_DEP)
 	$P PROTOC
 	$(PROTOC) -I $(PROTO_FILE_DIR) -o $(JS_BUILD_DIR)/ql2.desc $(PROTO_FILE)
 
-$(PROTO_MODULE): $(PROTO_FILE) | $(PROTO2JS) $(JS_BUILD_DIR)/.
+$(PROTO_MODULE): $(PROTO_FILE) | $(PROTO2JS_BIN_DEP) $(JS_BUILD_DIR)/.
 	$P PROTO2JS
 	$(PROTO2JS) $< -commonjs > $@
 
@@ -26,7 +26,7 @@ $(PROTO_MODULE): $(PROTO_FILE) | $(PROTO2JS) $(JS_BUILD_DIR)/.
 JS_PKG_FILES := $(DRIVER_COMPILED_COFFEE) $(JS_SRC_DIR)/README.md $(PROTO_MODULE) $(PB_BIN_FILE) $(JS_SRC_DIR)/package.json $(JS_SRC_DIR)/npm-shrinkwrap.json
 
 .SECONDARY: $(DRIVER_COFFEE_BUILD_DIR)/.
-$(DRIVER_COFFEE_BUILD_DIR)/%.js: $(JS_SRC_DIR)/%.coffee | $(DRIVER_COFFEE_BUILD_DIR)/. $(COFFEE)
+$(DRIVER_COFFEE_BUILD_DIR)/%.js: $(JS_SRC_DIR)/%.coffee | $(DRIVER_COFFEE_BUILD_DIR)/. $(COFFEE_BIN_DEP)
 	$P COFFEE
 	$(COFFEE) -b -p -c $< > $@
 
@@ -69,7 +69,7 @@ $(JS_PKG_DIR)/node_modules: $(JS_PKG_DIR) | $(NPM_BIN_DEP)
 	  false \
 	)
 
-$(JS_BUILD_DIR)/rethinkdb.js: $(JS_PKG_DIR) $(JS_PKG_DIR)/node_modules | $(BROWSERIFY)
+$(JS_BUILD_DIR)/rethinkdb.js: $(JS_PKG_DIR) $(JS_PKG_DIR)/node_modules | $(BROWSERIFY_BIN_DEP)
 	$P BROWSERIFY
 	cd $(JS_PKG_DIR) && \
 		$(abspath $(BROWSERIFY)) --require ./rethinkdb:rethinkdb --outfile $(abspath $@)
