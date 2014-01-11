@@ -111,11 +111,8 @@ configure () {
     check_v8_pre_3_19
     if [[ $NO_TCMALLOC = 0 ]] ; then
         check_lib tcmalloc_minimal
-        if contains "$FETCH_LIST" tcmalloc_minimal; then
-            check_lib unwind
-        fi
     else
-        var TCMALLOC_MINIMAL_LIBS ""
+        empty_deps_lib tcmalloc_minimal
     fi
     test_protobuf
     check_boost
@@ -803,9 +800,7 @@ check_lib () {
     for lib in $1 $aliases; do
         $check $lib $1
         if ! $can_show; then
-            var "$(uc $1)_INCLUDE" ""
-            var "$(uc $1)_INCLUDE_DEP" ""
-            var "$(uc $1)_LIBS_DEP" ""
+            empty_deps_lib $1
             return
         fi
     done
@@ -814,6 +809,12 @@ check_lib () {
     else
         show_no "lib$1$static_info"
     fi
+}
+
+empty_deps_lib () {
+    var "$(uc $1)_INCLUDE" ""
+    var "$(uc $1)_INCLUDE_DEP" ""
+    var "$(uc $1)_LIBS_DEP" ""
 }
 
 check_dyn_lib () {
