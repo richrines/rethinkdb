@@ -52,17 +52,25 @@ define support_rules
 
 # Download a single packages
 .PHONY: fetch-$2
-fetch-$2: $$(SUPPORT_SRC_DIR)/$2_$3
+fetch-$2: $(SUPPORT_SRC_DIR)/$2_$3
+
+# Depend on node for fetching node packages
+$(SUPPORT_SRC_DIR)/$2_$3: | $(foreach dep, $(filter node,$($2_DEPENDS)), $(SUPPORT_BUILD_DIR)/$(dep)_$($(dep)_VERSION)/install.witness)
 
 # Build a single package
-.PHONY: support-$2
+.PHONY: support-$2 support-$2_$3
 support-$2: support-$2_$3
-
-.PHONY: support-$2_$3
 support-$2_$3: | $1
 
 # The actual rule that builds the package
-rebuild-$2_% $(foreach target,$1,$(subst _$3/,_%/,$(target))) $(SUPPORT_BUILD_DIR)/$2_%/install.witness: \
+# The targets are all modified to contain a `%' instead of the version number, otherwise make
+# will re-run the recipe for each target.
+# The generated prerequisites are:
+#  * The directory containing the source code
+#  * The include directories for this package, because some packages cannot run the install
+#    and install-include rules in parallel
+#  * The `install.witness' file for each of the dependencies of the package
+build-$2_% $(foreach target,$1,$(subst _$3/,_%/,$(target))) $(SUPPORT_BUILD_DIR)/$2_%/install.witness: \
   | $(SUPPORT_SRC_DIR)/$2_$3 $(filter $(SUPPORT_BUILD_DIR)/$2_$3/include, $(SUPPORT_INCLUDE_DIRS)) \
   $(foreach dep, $($2_DEPENDS), $(SUPPORT_BUILD_DIR)/$(dep)_$($(dep)_VERSION)/install.witness)
 	$$P BUILD $2_$3
