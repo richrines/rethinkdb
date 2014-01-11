@@ -112,6 +112,7 @@ configure () {
     if [[ $NO_TCMALLOC = 0 ]] ; then
         check_lib tcmalloc_minimal
     else
+        var TCMALLOC_MINIMAL_LIBS ""
         empty_deps_lib tcmalloc_minimal
     fi
     test_protobuf
