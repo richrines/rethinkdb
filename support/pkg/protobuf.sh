@@ -7,16 +7,17 @@ pkg_install-include () {
     protobuf_install_target=install-data pkg_install
 }
 
-pkg_install () {
+pkg_install () (
     pkg_copy_src_to_build
 
-    local ENV=
     if [[ "$OS" = "Darwin" ]]; then
-        ENV="env CXX=clang++ CXXFLAGS='-std=c++11 -stdlib=libc++' LDFLAGS=-lc++"
+        export CXX=clang++
+        export CXXFLAGS='-std=c++11 -stdlib=libc++'
+        export LDFLAGS=-lc++
     fi
 
-    in_dir "$build_dir" $ENV ./configure --prefix="$(niceabspath "$install_dir")"
-    in_dir "$build_dir" $ENV make ${protobuf_install_target:-install}
+    pkg_configure --prefix="$(niceabspath "$install_dir")"
+    pkg_make ${protobuf_install_target:-install}
 
     # TODO: is there a platform that needs the library path to be adjusted like this?
     # local protoc="$install_dir/bin/protoc"
@@ -28,4 +29,4 @@ pkg_install () {
     #     echo 'exec protoc-orig "$@"' >> "$protoc"
     #     chmod +x "$protoc"
     # fi
-}
+)
