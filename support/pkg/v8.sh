@@ -13,6 +13,15 @@ pkg_fetch () {
 pkg_install () {
     pkg_copy_src_to_build
     mkdir -p "$install_dir/lib"
-    pkg_make native CXXFLAGS="-Wno-array-bounds -Wno-unused-local-typedefs -Wno-aggressive-loop-optimizations"
+
+    CXX="g++"
+    DISABLE_WARNINGS="-Wno-array-bounds -Wno-unused-local-typedefs -Wno-aggressive-loop-optimizations"
+    for flag in $DISABLE_WARNINGS; do
+        if true | $CXX -Werror $flag -E - >/dev/null 2>&1; then
+            CXXFLAGS="${CXXFLAGS:-} $flag"
+        fi
+    done
+    echo CXXFLAGS: $CXXFLAGS
+    pkg_make native CXXFLAGS="$CXXFLAGS" CXX="$CXX"
     find "$build_dir" -iname "*.o" | grep -v '\/preparser_lib\/' | xargs ar cqs "$install_dir/lib/libv8.a"
 }

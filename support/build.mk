@@ -50,9 +50,11 @@ SUPPORT_INCLUDE_DIRS := $(foreach var, $(filter %_INCLUDE_DEP,        $(.VARIABL
 # $1 = target files, $2 = pkg name, $3 = pkg version
 define support_rules
 
-# Download a single packages
-.PHONY: fetch-$2
+# Aliases for the longer version of these targets
+.PHONY: fetch-$2 build-$2 clean-$2
 fetch-$2: $(SUPPORT_SRC_DIR)/$2_$3
+build-$2: build-$2_$3
+clean-$2: clean-$2_$3
 
 # Depend on node for fetching node packages
 $(SUPPORT_SRC_DIR)/$2_$3: | $(foreach dep, $(filter node,$($2_DEPENDS)), $(SUPPORT_BUILD_DIR)/$(dep)_$($(dep)_VERSION)/install.witness)
@@ -61,6 +63,12 @@ $(SUPPORT_SRC_DIR)/$2_$3: | $(foreach dep, $(filter node,$($2_DEPENDS)), $(SUPPO
 .PHONY: support-$2 support-$2_$3
 support-$2: support-$2_$3
 support-$2_$3: | $1
+
+# Clean a single package
+.PHONY: clean-$2_$3
+clean-$2_$3:
+	$$P RM $(SUPPORT_BUILD_DIR)/$2_$3
+	rm -rf $(SUPPORT_BUILD_DIR)/$2_$3
 
 # The actual rule that builds the package
 # The targets are all modified to contain a `%' instead of the version number, otherwise make
