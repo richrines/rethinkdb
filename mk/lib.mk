@@ -123,9 +123,10 @@ else
   EXTERN_MAKE := MAKEFLAGS= make --no-print-directory
 endif
 
-##### Is --always-make (-B) turned on?
+##### Test for certain make command line flags
 
 ALWAYS_MAKE = $(if $(findstring B,$(firstword $(MAKEFLAGS)))$(filter -B,$(MAKEFLAGS)),1)
+DRY_RUN = $(if $(findstring n,$(firstword $(MAKEFLAGS))),1)
 
 ##### Misc
 

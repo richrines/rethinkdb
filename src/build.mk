@@ -323,7 +323,7 @@ rpc/semilattice/joins/macros.hpp rpc/serialize_macros.hpp rpc/mailbox/typed.hpp:
 .PHONY: rethinkdb
 rethinkdb: $(BUILD_DIR)/$(SERVER_EXEC_NAME)
 
-$(BUILD_DIR)/$(SERVER_EXEC_NAME): $(SERVER_EXEC_OBJS) | $(BUILD_DIR)/. $(TCMALLOC_MINIMAL_LIBS_DEP) $(V8_LIBS_DEP) $(PROTOBUF_LIBS_DEP)
+$(BUILD_DIR)/$(SERVER_EXEC_NAME): $(SERVER_EXEC_OBJS) | $(BUILD_DIR)/. $(TCMALLOC_MINIMAL_LIBS_DEP) $(V8_LIBS_DEP) $(PROTOBUF_LIBS_DEP) $(RE2_LIBS_DEP)
 	$P LD $@
 	$(RT_CXX) $(SERVER_EXEC_OBJS) $(RT_LDFLAGS) -o $(BUILD_DIR)/$(SERVER_EXEC_NAME) $(LD_OUTPUT_FILTER)
 ifeq ($(NO_TCMALLOC),0) # if we link to tcmalloc
@@ -339,7 +339,9 @@ endif
 # default cases. So we have to remove the -Wswitch-default argument for them.
 $(OBJ_DIR)/unittest/%.o: RT_CXXFLAGS := $(filter-out -Wswitch-default,$(RT_CXXFLAGS)) $(GTEST_INCLUDE)
 
-$(BUILD_DIR)/$(SERVER_UNIT_TEST_NAME): $(SERVER_UNIT_TEST_OBJS) $(GTEST_LIBS_DEP) | $(BUILD_DIR)/. $(TCMALLOC_MINIMAL_LIBS_DEP) $(V8_LIBS_DEP) $(PROTOBUF_LIBS_DEP)
+$(OBJ_DIR)/unittest/%.o: | $(GTEST_INCLUDE_DEP)
+
+$(BUILD_DIR)/$(SERVER_UNIT_TEST_NAME): $(SERVER_UNIT_TEST_OBJS) $(GTEST_LIBS_DEP) | $(BUILD_DIR)/. $(TCMALLOC_MINIMAL_LIBS_DEP) $(V8_LIBS_DEP) $(PROTOBUF_LIBS_DEP) $(RE2_LIBS_DEP)
 	$P LD $@
 	$(RT_CXX) $(SERVER_UNIT_TEST_OBJS) $(RT_LDFLAGS) $(GTEST_LIBS) -o $@ $(LD_OUTPUT_FILTER)
 

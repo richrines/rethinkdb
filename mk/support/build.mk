@@ -23,6 +23,7 @@ JOBSERVER_FDS_FLAG = $(filter --jobserver-fds=%,$(MAKEFLAGS))
 PKG_MAKEFLAGS = $(if $(JOBSERVER_FDS_FLAG), -j) $(JOBSERVER_FDS_FLAG)
 PKG_SCRIPT_VARIABLES := WGET CURL NPM OS FETCH_LIST BUILD_ROOT_DIR PTHREAD_LIBS
 PKG_SCRIPT = $(foreach v, $(PKG_SCRIPT_VARIABLES), $v='$($v)') MAKEFLAGS='$(PKG_MAKEFLAGS)' $/mk/support/pkg/pkg.sh
+PKG_RECURSIVE_MARKER := $(if $(findstring 0,$(JUST_SCAN_MAKEFILES)),$(if $(DRY_RUN),,+))
 
 # How to log the output of fetching and building packages
 ifneq (1,$(VERBOSE))
@@ -84,7 +85,7 @@ build-$2_% $(foreach target,$1,$(subst _$3/,_%/,$(target))) $(SUPPORT_BUILD_DIR)
   | $(SUPPORT_SRC_DIR)/$2_$3 $(filter $(SUPPORT_BUILD_DIR)/$2_$3/include, $(SUPPORT_INCLUDE_DIRS)) \
   $(foreach dep, $($2_DEPENDS), $(SUPPORT_BUILD_DIR)/$(dep)_$($(dep)_VERSION)/install.witness)
 	$$P BUILD $2_$3
-	$$(PKG_SCRIPT) install $2 $$(call SUPPORT_LOG_REDIRECT, $$(SUPPORT_LOG_DIR)/$2_$3_install.log)
+	$(PKG_RECURSIVE_MARKER)$$(PKG_SCRIPT) install $2 $$(call SUPPORT_LOG_REDIRECT, $$(SUPPORT_LOG_DIR)/$2_$3_install.log)
 	touch $(SUPPORT_BUILD_DIR)/$2_$3/install.witness
 
 endef
@@ -104,9 +105,9 @@ define support_include_rules
 support-include-$2: support-include-$2_$3
 support-include-$2_% $(subst _$3/,_%/,$1): | $(SUPPORT_SRC_DIR)/$2_$3
 	$$P INSTALL-INCLUDE $2_$3
-	$$(PKG_SCRIPT) install-include $2 \
+	$(PKG_RECURSIVE_MARKER)$$(PKG_SCRIPT) install-include $2 \
 	  $$(call SUPPORT_LOG_REDIRECT, $$(SUPPORT_LOG_DIR)/$2_$3_install-include.log)
-	touch $1
+	test -e $1 && touch $1 || true
 
 endef
 

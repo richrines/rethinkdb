@@ -10,5 +10,5 @@ pkg_install-include () {
 
 pkg_install () {
     pkg_copy_src_to_build
-    pkg_make install prefix="$install_dir" CXXFLAGS="-O3" LDFLAGS="$(PTHREAD_LIBS)"
+    pkg_make install prefix="$install_dir" CXXFLAGS="-O3" LDFLAGS="$PTHREAD_LIBS"
 }

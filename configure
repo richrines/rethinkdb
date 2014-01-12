@@ -22,7 +22,7 @@ init () {
     required_libs="protobuf v8 termcap re2"
     optional_libs="gtest"
     other_libs="unwind tcmalloc_minimal"
-    all_libs="$required_libs $other_libs"
+    all_libs="$required_libs $optional_libs $other_libs"
     default_static="tcmalloc_minimal"
 
     web_assets_deps="lessc coffee handlebars browserify proto2js"
