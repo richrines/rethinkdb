@@ -101,8 +101,8 @@ pkg_copy_src_to_build () {
 
 pkg_install-include () {
     test -e "$install_dir/include" && rm -rf "$install_dir/include"
-    mkdir -p "$install_dir/include"
     if [[ -e "$src_dir/include" ]]; then
+        mkdir -p "$install_dir/include"
         cp -a "$src_dir/include/." "$install_dir/include"
     fi
 }

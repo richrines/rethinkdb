@@ -17,9 +17,10 @@ init () {
     min_coffee_version="1.6.2"
 
     must_fetch_list='protobufjs'
-    please_fetch_list="handlebars coffee-script less browserify $must_fetch_list"
+    please_fetch_list="handlebars coffee-script less browserify re2 gtest $must_fetch_list"
 
     required_libs="protobuf v8 termcap re2"
+    optional_libs="gtest"
     other_libs="unwind tcmalloc_minimal"
     all_libs="$required_libs $other_libs"
     default_static="tcmalloc_minimal"
@@ -107,11 +108,14 @@ configure () {
     done
     build_try_lib_paths
     for lib in $required_libs; do
-        check_lib $lib
+        check_lib $lib require
+    done
+    for lib in $optional_libs; do
+        check_lib $lib optional
     done
     check_v8_pre_3_19
     if [[ $NO_TCMALLOC = 0 ]] ; then
-        check_lib tcmalloc_minimal
+        check_lib tcmalloc_minimal require
     else
         var TCMALLOC_MINIMAL_LIBS ""
         empty_deps_lib tcmalloc_minimal
@@ -690,15 +694,15 @@ add_fetch () {
         error "Internal error: cannot fetch $pkg"
         return 1
     fi
-    show fetch ${pkg}_$version
+    show external/${pkg}_$version
     if ! contains "$FETCH_LIST" "$pkg"; then
         local depends=$(pkg depends "$pkg")
         for dep in $depends; do
             fetch_pkg $dep
         done
         var_append FETCH_LIST "$pkg"
-        var "$pkg""_VERSION" "$version"
-        var "$pkg""_DEPENDS" "$depends"
+        var "${pkg}_VERSION" "$version"
+        var "${pkg}_DEPENDS" "$depends"
     fi
 }
 
@@ -714,8 +718,8 @@ fetch_bin () {
     local pkg
     local version
     add_fetch "$1"
-    macro "$(uc "$1")"         $(niceabspath "\$(SUPPORT_BUILD_DIR)/$pkg""_$version/bin/$1")
-    macro "$(uc "$1")_BIN_DEP" "\$(SUPPORT_BUILD_DIR)/$pkg""_$version/bin/$1"
+    macro "$(uc "$1")"         $(niceabspath "\$(SUPPORT_BUILD_DIR)/${pkg}_$version/bin/$1")
+    macro "$(uc "$1")_BIN_DEP" "\$(SUPPORT_BUILD_DIR)/${pkg}_$version/bin/$1"
 }
 
 # Chose to fetch the given library
@@ -723,10 +727,10 @@ fetch_lib () {
     local pkg
     local version
     add_fetch "$1"
-    macro "$(uc "$1")_LIBS"             "\$(SUPPORT_BUILD_DIR)/$pkg""_$version/lib/lib$1.a"
-    macro "$(uc "$1")_LIBS_DEP"         "\$(SUPPORT_BUILD_DIR)/$pkg""_$version/lib/lib$1.a"
-    macro "$(uc "$1")_INCLUDE" "-isystem \$(SUPPORT_BUILD_DIR)/$pkg""_$version/include"
-    macro "$(uc "$1")_INCLUDE_DEP"      "\$(SUPPORT_BUILD_DIR)/$pkg""_$version/include"
+    macro "$(uc "$1")_LIBS"             "\$(SUPPORT_BUILD_DIR)/${pkg}_$version/lib/lib$1.a"
+    macro "$(uc "$1")_LIBS_DEP"         "\$(SUPPORT_BUILD_DIR)/${pkg}_$version/lib/lib$1.a"
+    macro "$(uc "$1")_INCLUDE" "-isystem \$(SUPPORT_BUILD_DIR)/${pkg}_$version/include"
+    macro "$(uc "$1")_INCLUDE_DEP"      "\$(SUPPORT_BUILD_DIR)/${pkg}_$version/include"
 }
 
 # require_dep <name>
@@ -780,14 +784,15 @@ build_try_lib_paths () {
 # WISHLIST: Properly detect the presence of the headers and check that the
 #           installed version is compatible. Try using pkg-config.
 check_lib () {
+    local info=$2
     local path
     if contains "$please_fetch_list" $(pkg_name "$1"); then
-        require_dep $1
+        ${info}_dep $1
         fetch_lib $1
         return
     fi
     if lookup "$force_paths" $1 path; then
-        require_dep $1
+        ${info}_dep $1
         check_lib_compile "$path" $1
         $can_show && show_no "$path"
         return
@@ -800,7 +805,7 @@ check_lib () {
         static_info=
         check=check_dyn_lib
     fi
-    require "$1$static_info"
+    $info "$1$static_info"
     delay_errors=true
     local aliases
     lookup "$lib_alias" $1 aliases || aliases=

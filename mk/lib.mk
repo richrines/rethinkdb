@@ -123,6 +123,10 @@ else
   EXTERN_MAKE := MAKEFLAGS= make --no-print-directory
 endif
 
+##### Is --always-make (-B) turned on?
+
+ALWAYS_MAKE = $(if $(findstring B,$(firstword $(MAKEFLAGS)))$(filter -B,$(MAKEFLAGS)),1)
+
 ##### Misc
 
 .PHONY: sense
