@@ -39,8 +39,7 @@ prepare_deb_package_dirs:
 DSC_CONFIGURE_DEFAULT += --prefix=/usr --sysconfdir=/etc --localstatedir=/var
 
 ifeq ($(BUILD_PORTABLE),1)
-  DIST_SUPPORT_PACKAGES := v8 protobuf gperftools libunwind
-  DIST_SUPPORT := $(foreach pkg, $(DIST_SUPPORT_PACKAGES), $(SUPPORT_SRC_DIR)/$(pkg)_$($(pkg)_VERSION))
+  DIST_SUPPORT_PACKAGES := v8 protobuf gperftools libunwind re2 gtest
 
   DIST_CUSTOM_MK_LINES :=
   ifneq ($(CWD),$(TOP))
@@ -49,9 +48,11 @@ ifeq ($(BUILD_PORTABLE),1)
   DIST_CUSTOM_MK_LINES += 'BUILD_PORTABLE := 1'
   DIST_CONFIGURE_DEFAULT += --fetch v8 --fetch protobuf --fetch gperftools
 else
-  DIST_SUPPORT :=
+  DIST_SUPPORT_PACKAGES := re2 gtest
   DIST_CUSTOM_MK_LINES :=
 endif
+
+DIST_SUPPORT = $(foreach pkg, $(DIST_SUPPORT_PACKAGES), $(SUPPORT_SRC_DIR)/$(pkg)_$($(pkg)_VERSION))
 
 DEB_BUILD_DEPENDS := g++, libboost-dev, libssl-dev, curl, exuberant-ctags, m4, debhelper
 DEB_BUILD_DEPENDS += , fakeroot, python, libncurses5-dev
@@ -145,10 +146,6 @@ reset-dist-dir: FORCE | web-assets
 	rm -rf $(DIST_DIR)
 	mkdir -p $(DIST_DIR)
 	cp -pRP $(DIST_FILE_LIST) $(DIST_DIR)
-
-	$(EXTERN_MAKE) -C $(TOP)/external/gtest/make clean
-	mkdir $(DIST_DIR)/external
-	cp -pRP $/external/gtest $(DIST_DIR)/external
 
 $(DIST_DIR)/custom.mk: FORCE | reset-dist-dir
 	$P ECHO "> $@"

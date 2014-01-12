@@ -23,8 +23,6 @@ bench/stress-client/*.o
 bench/stress-client/protocols/*.o
 bench/stress-client/protocols/query_language.pb.h
 bench/stress-client/protocols/query_language.pb.cc
-external/gtest/make/gtest-all.o
-external/gtest/make/gtest.a
 last_tested_versions
 src/spin_up_clusters.py
 src/.clang_complete
