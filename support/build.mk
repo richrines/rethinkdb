@@ -62,7 +62,7 @@ $(SUPPORT_SRC_DIR)/$2_$3: | $(foreach dep, $(filter node,$($2_DEPENDS)), $(SUPPO
 # Build a single package
 .PHONY: support-$2 support-$2_$3
 support-$2: support-$2_$3
-support-$2_$3: | $1
+support-$2_$3: $1
 
 # Clean a single package
 .PHONY: clean-$2_$3

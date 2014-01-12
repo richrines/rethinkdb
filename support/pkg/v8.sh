@@ -15,10 +15,10 @@ pkg_install () {
     mkdir -p "$install_dir/lib"
 
     CXX="g++"
-    DISABLE_WARNINGS="-Wno-array-bounds -Wno-unused-local-typedefs -Wno-aggressive-loop-optimizations"
+    DISABLE_WARNINGS="array-bounds unused-local-typedefs aggressive-loop-optimizations unused-result"
     for flag in $DISABLE_WARNINGS; do
-        if true | $CXX -Werror $flag -E - >/dev/null 2>&1; then
-            CXXFLAGS="${CXXFLAGS:-} $flag"
+        if $CXX -Werror -W$flag -E - >/dev/null 2>&1 </dev/null ; then
+            CXXFLAGS="${CXXFLAGS:-} -Wno-$flag"
         fi
     done
     echo CXXFLAGS: $CXXFLAGS
