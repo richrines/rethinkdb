@@ -718,7 +718,7 @@ fetch_bin () {
     local pkg
     local version
     add_fetch "$1"
-    macro "$(uc "$1")"         $(niceabspath "\$(SUPPORT_BUILD_DIR)/${pkg}_$version/bin/$1")
+    macro "$(uc "$1")"         "\$(abspath \$(SUPPORT_BUILD_DIR)/${pkg}_$version/bin/$1)"
     macro "$(uc "$1")_BIN_DEP" "\$(SUPPORT_BUILD_DIR)/${pkg}_$version/bin/$1"
 }
 
@@ -779,7 +779,7 @@ build_try_lib_paths () {
         done | sort -u)
 }
 
-# check_lib <name>
+# check_lib <name> <required/optional>
 # Check for the presence of a library and set the correct make flags for it
 # WISHLIST: Properly detect the presence of the headers and check that the
 #           installed version is compatible. Try using pkg-config.
