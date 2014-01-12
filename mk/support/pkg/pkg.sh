@@ -176,8 +176,8 @@ load_pkg () {
     pkg=$1
     include "$pkg.sh"
 
-    src_dir=$(niceabspath "$pkg_dir/../src/$pkg""_$version")
-    install_dir=$(niceabspath "$pkg_dir/../../build/support/$pkg""_$version")
+    src_dir=$(niceabspath "$external_dir/$pkg""_$version")
+    install_dir=$(niceabspath "$root_build_dir/support/$pkg""_$version")
     build_dir=$(niceabspath "$install_dir/build")
 }
 
@@ -228,6 +228,8 @@ pkg () {
 # Configure some default paths
 pkg_dir=$(niceabspath "$(dirname $0)")
 conf_dir=$(niceabspath "$pkg_dir/../config")
+external_dir=$(niceabspath "$pkg_dir/../../../external")
+root_build_dir=${BUILD_ROOT_DIR:-$(niceabspath "$pkg_dir/../../../build")}
 
 # These variables should be passed to this script from support/build.mk
 WGET=${WGET:-}
@@ -235,6 +237,7 @@ CURL=${CURL:-}
 OS=${OS:-}
 # FETCH_LIST
 # NPM
+# BUILD_ROOT_DIR
 
 # Read the command
 cmd=$1

@@ -170,9 +170,9 @@ $(DIST_DIR)/VERSION.OVERRIDE: FORCE | reset-dist-dir
 .PHONY: dist-dir
 dist-dir: reset-dist-dir $(DIST_DIR)/custom.mk $(DIST_DIR)/precompiled/web
 dist-dir: $(DIST_DIR)/VERSION.OVERRIDE $(DIST_SUPPORT) $(DIST_DIR)/configure.default
-	$P CP $(DIST_SUPPORT) "->" $(DIST_DIR)/support/src
+	$P CP $(DIST_SUPPORT) "->" $(DIST_DIR)/external
 	$(foreach path,$(DIST_SUPPORT), \
-	  $(foreach dir,$(DIST_DIR)/support/src/$(patsubst $(SUPPORT_SRC_DIR)/%,%,$(path)), \
+	  $(foreach dir,$(DIST_DIR)/external/$(patsubst $(SUPPORT_SRC_DIR)/%,%,$(path)), \
 	    mkdir -p $(dir) $(newline) \
 	    cp -pPR $(path)/. $(dir) $(newline) ))
 

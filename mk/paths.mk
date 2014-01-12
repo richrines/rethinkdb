@@ -8,8 +8,8 @@ BUILD_ROOT_DIR := $(TOP)/build
 PACKAGING_DIR := $(TOP)/packaging
 PACKAGES_DIR := $(BUILD_ROOT_DIR)/packages
 JS_BUILD_DIR := $(TOP)/build/drivers/javascript
-SUPPORT_SRC_DIR := $(TOP)/support/src
-SUPPORT_BUILD_DIR := $(BUILD_ROOT_DIR)/support
+SUPPORT_SRC_DIR := $(TOP)/external
+SUPPORT_BUILD_DIR := $(BUILD_ROOT_DIR)/external
 SUPPORT_LOG_DIR := $(SUPPORT_BUILD_DIR)
 
 # If the BUILD_DIR is not set, generate a name that depends on the different settings
