@@ -38,7 +38,7 @@ support: $(foreach pkg, $(FETCH_LIST), support-$(pkg))
 # Download a dependency
 $(SUPPORT_SRC_DIR)/%:
 	$P FETCH $*
-	name='$*'; $(PKG_SCRIPT) fetch $${name%%_*} $(call SUPPORT_LOG_REDIRECT, $(SUPPORT_LOG_DIR)/$*_fetch.log)
+	name='$*'; $(PKG_SCRIPT) fetch "$${name%%_*}" $(call SUPPORT_LOG_REDIRECT, $(SUPPORT_LOG_DIR)/$*_fetch.log)
 
 # List of files that make expects the packages to install
 SUPPORT_TARGET_FILES := $(foreach var, $(filter %_LIBS_DEP %_BIN_DEP, $(.VARIABLES)), $($(var)))

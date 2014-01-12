@@ -39,14 +39,15 @@ prepare_deb_package_dirs:
 DSC_CONFIGURE_DEFAULT += --prefix=/usr --sysconfdir=/etc --localstatedir=/var
 
 ifeq ($(BUILD_PORTABLE),1)
-  DIST_SUPPORT := $(V8_SRC_DIR) $(PROTOC_SRC_DIR) $(GPERFTOOLS_SRC_DIR) $(LIBUNWIND_SRC_DIR)
+  DIST_SUPPORT_PACKAGES := v8 protobuf gperftools libunwind
+  DIST_SUPPORT := $(foreach pkg, $(DIST_SUPPORT_PACKAGES), $(SUPPORT_SRC_DIR)/$(pkg)_$($(pkg)_VERSION))
 
   DIST_CUSTOM_MK_LINES :=
   ifneq ($(CWD),$(TOP))
     DIST_CUSTOM_LINES = $(error Portable packages need to be built from '$(TOP)')
   endif
   DIST_CUSTOM_MK_LINES += 'BUILD_PORTABLE := 1'
-  DIST_CONFIGURE_DEFAULT += --fetch v8 --fetch protoc --fetch tcmalloc_minimal
+  DIST_CONFIGURE_DEFAULT += --fetch v8 --fetch protobuf --fetch gperftools
 else
   DIST_SUPPORT :=
   DIST_CUSTOM_MK_LINES :=
@@ -169,11 +170,11 @@ $(DIST_DIR)/VERSION.OVERRIDE: FORCE | reset-dist-dir
 .PHONY: dist-dir
 dist-dir: reset-dist-dir $(DIST_DIR)/custom.mk $(DIST_DIR)/precompiled/web
 dist-dir: $(DIST_DIR)/VERSION.OVERRIDE $(DIST_SUPPORT) $(DIST_DIR)/configure.default
-	$P CP $(DIST_SUPPORT) "->" $(DIST_DIR)
+	$P CP $(DIST_SUPPORT) "->" $(DIST_DIR)/support/src
 	$(foreach path,$(DIST_SUPPORT), \
-	  $(foreach dir,$(DIST_DIR)/support/$(patsubst $(SUPPORT_DIR)/%,%,$(dir $(path))), \
+	  $(foreach dir,$(DIST_DIR)/support/src/$(patsubst $(SUPPORT_SRC_DIR)/%,%,$(path)), \
 	    mkdir -p $(dir) $(newline) \
-	    cp -pPR $(path) $(dir) $(newline) ))
+	    cp -pPR $(path)/. $(dir) $(newline) ))
 
 $(DIST_PACKAGE_TGZ): dist-dir
 	$P TAR $@ $(DIST_DIR)
