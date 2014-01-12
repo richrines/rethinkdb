@@ -32,13 +32,10 @@ real-default-goal: $(DEFAULT_GOAL)
 include $(TOP)/mk/paths.mk
 
 # Download and build internal tools like v8 and gperf
-include $(TOP)/support/build.mk
+include $(TOP)/mk/support/build.mk
 
 # make install
 include $(TOP)/mk/install.mk
-
-# External dependencies
-include $(TOP)/external/build.mk
 
 # Clients drivers
 include $(TOP)/drivers/build.mk

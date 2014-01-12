@@ -19,7 +19,7 @@ init () {
     must_fetch_list='protobufjs'
     please_fetch_list="handlebars coffee-script less browserify $must_fetch_list"
 
-    required_libs="protobuf v8 termcap"
+    required_libs="protobuf v8 termcap re2"
     other_libs="unwind tcmalloc_minimal"
     all_libs="$required_libs $other_libs"
     default_static="tcmalloc_minimal"
@@ -414,7 +414,7 @@ show_no () {
     local err=$delayed_error
     show no
     if $req; then
-        error "${err:-${1:-} not found}"
+        error "${err:-${1:-} not found. Try running ./configure with the --allow-fetch option.}"
     elif [[ -n "$delayed_error" ]]; then
         error "$err"
     fi
@@ -676,9 +676,9 @@ check_bin () {
     var "$(uc $1)_BIN_DEP" ""
 }
 
-# Invoke support/pkg/pkg.sh with the required environment variables
+# Invoke pkg.sh with the required environment variables
 pkg () {
-    FETCH_LIST="$FETCH_LIST" bash $root/support/pkg/pkg.sh "$@"
+    FETCH_LIST="$FETCH_LIST" bash $root/mk/support/pkg/pkg.sh "$@"
 }
 
 # add_fetch <name>
@@ -690,7 +690,7 @@ add_fetch () {
         error "Internal error: cannot fetch $pkg"
         return 1
     fi
-    show fetch $pkg-$version
+    show fetch ${pkg}_$version
     if ! contains "$FETCH_LIST" "$pkg"; then
         local depends=$(pkg depends "$pkg")
         for dep in $depends; do
@@ -974,7 +974,7 @@ pkg_name () {
 # Check if we know how to fetch dep
 can_fetch () {
     local pkg=$(pkg_name $1)
-    test -e $root/support/pkg/"$pkg".sh
+    test -e $root/mk/support/pkg/"$pkg".sh
 }
 
 # List all the packages that can be fetched

@@ -112,7 +112,7 @@ pkg_configure () {
 }
 
 pkg_make () {
-    in_dir "$install_dir/build" make "$@"
+    in_dir "$build_dir" make "$@"
 }
 
 pkg_install () {
@@ -177,7 +177,7 @@ load_pkg () {
     include "$pkg.sh"
 
     src_dir=$(niceabspath "$external_dir/$pkg""_$version")
-    install_dir=$(niceabspath "$root_build_dir/support/$pkg""_$version")
+    install_dir=$(niceabspath "$root_build_dir/external/$pkg""_$version")
     build_dir=$(niceabspath "$install_dir/build")
 }
 
@@ -238,6 +238,7 @@ OS=${OS:-}
 # FETCH_LIST
 # NPM
 # BUILD_ROOT_DIR
+# PTHREAD_LIBS
 
 # Read the command
 cmd=$1

@@ -19,8 +19,8 @@
 # How to call the pkg.sh script
 WGET ?=
 CURL ?=
-PKG_SCRIPT_VARIABLES := WGET CURL NPM OS FETCH_LIST
-PKG_SCRIPT := $(foreach v, $(PKG_SCRIPT_VARIABLES), $v='$($v)') MAKEFLAGS= $/support/pkg/pkg.sh
+PKG_SCRIPT_VARIABLES := WGET CURL NPM OS FETCH_LIST BUILD_ROOT_DIR PTHREAD_LIBS
+PKG_SCRIPT := $(foreach v, $(PKG_SCRIPT_VARIABLES), $v='$($v)') MAKEFLAGS= $/mk/support/pkg/pkg.sh
 
 # How to log the output of fetching and building packages
 ifneq (1,$(VERBOSE))
