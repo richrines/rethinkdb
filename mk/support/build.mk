@@ -41,6 +41,10 @@ endif
 fetch: $(foreach pkg, $(FETCH_LIST), fetch-$(pkg))
 support: $(foreach pkg, $(FETCH_LIST), support-$(pkg))
 
+# Ignore old gtest files for backwards compatibility
+$(SUPPORT_SRC_DIR)/gtest/%:
+	true
+
 # Download a dependency
 $(SUPPORT_SRC_DIR)/%:
 	$P FETCH $*
